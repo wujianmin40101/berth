@@ -120,20 +120,20 @@ nonisolated enum MemoryMap {
         func pages(_ count: UInt64) -> UInt64 { count * page }
         let appPages = counts.internalPages > counts.purgeable ? counts.internalPages - counts.purgeable : 0
         return [
-            MemorySlice(id: "app", title: "应用内存", bytes: pages(appPages)),
-            MemorySlice(id: "wired", title: "联动内存", bytes: pages(counts.wired)),
-            MemorySlice(id: "compressed", title: "已压缩", bytes: pages(counts.compressor)),
-            MemorySlice(id: "cached", title: "缓存文件", bytes: pages(counts.external + counts.purgeable)),
-            MemorySlice(id: "free", title: "可用", bytes: pages(counts.free + counts.speculative))
+            MemorySlice(id: "app", title: L("应用内存"), bytes: pages(appPages)),
+            MemorySlice(id: "wired", title: L("联动内存"), bytes: pages(counts.wired)),
+            MemorySlice(id: "compressed", title: L("已压缩"), bytes: pages(counts.compressor)),
+            MemorySlice(id: "cached", title: L("缓存文件"), bytes: pages(counts.external + counts.purgeable)),
+            MemorySlice(id: "free", title: L("可用"), bytes: pages(counts.free + counts.speculative))
         ]
     }
 
     nonisolated static func summary(used: UInt64, total: UInt64) -> String {
-        guard total > 0 else { return "读不到物理内存。" }
+        guard total > 0 else { return L("读不到物理内存。") }
         let ratio = Double(used) / Double(total)
-        if ratio > 0.85 { return "内存比较紧。可以到「优化速度」里释放，或结束占得多的应用。" }
-        if ratio > 0.6 { return "内存占用中等。" }
-        return "内存还宽裕。"
+        if ratio > 0.85 { return L("内存比较紧。可以到「优化速度」里释放，或结束占得多的应用。") }
+        if ratio > 0.6 { return L("内存占用中等。") }
+        return L("内存还宽裕。")
     }
 
     /// 命令行里最外层的 `.app` 名称。没有应用包时用可执行文件名。
@@ -277,7 +277,7 @@ nonisolated enum MemoryMap {
     nonisolated private static func path(_ pid: pid_t) -> String {
         var buffer = [CChar](repeating: 0, count: Int(MAXPATHLEN))
         let length = proc_pidpath(pid, &buffer, UInt32(buffer.count))
-        guard length > 0 else { return "进程 \(pid)" }
+        guard length > 0 else { return L("进程 %@", String(pid)) }
         return String(cString: buffer)
     }
 }
@@ -392,7 +392,7 @@ nonisolated enum AppUninstall {
                 let own = identity.bundleID == ownBundleID
                 let system = real.hasPrefix("/System/")
                 let removable = !own && !system
-                let reason = own ? "不能从这里卸载泊位" : (system ? "这是系统自带的应用" : nil)
+                let reason = own ? L("不能从这里卸载泊位") : (system ? L("这是系统自带的应用") : nil)
                 found.append(InstalledApp(
                     name: identity.name,
                     bundleID: identity.bundleID,
@@ -443,12 +443,12 @@ nonisolated enum AppUninstall {
 
     nonisolated static func trash(_ app: InstalledApp, home: URL = FileManager.default.homeDirectoryForCurrentUser) throws {
         let url = URL(fileURLWithPath: app.path)
-        guard isDirectApp(path: app.path, home: home) else { throw ToolError("路径不在允许卸载的范围内") }
+        guard isDirectApp(path: app.path, home: home) else { throw ToolError(L("路径不在允许卸载的范围内")) }
         guard let identity = readIdentity(url), identity.bundleID == app.bundleID else {
-            throw ToolError("应用已经变化，先刷新再卸载")
+            throw ToolError(L("应用已经变化，先刷新再卸载"))
         }
-        guard identity.bundleID != ownBundleID else { throw ToolError("不能从这里卸载泊位") }
-        guard !url.resolvingSymlinksInPath().path.hasPrefix("/System/") else { throw ToolError("这是系统自带的应用") }
+        guard identity.bundleID != ownBundleID else { throw ToolError(L("不能从这里卸载泊位")) }
+        guard !url.resolvingSymlinksInPath().path.hasPrefix("/System/") else { throw ToolError(L("这是系统自带的应用")) }
         let library = home.appendingPathComponent("Library")
         let others = inventory(home: home).filter { $0.path != app.path }.map { Identity(name: $0.name, bundleID: $0.bundleID) }
         let leftovers = deletionSet(library: library, app: identity, others: others).filter {
@@ -465,10 +465,10 @@ nonisolated enum AppUninstall {
         do {
             try FileManager.default.trashItem(at: url, resultingItemURL: nil)
         } catch {
-            throw ToolError("应用没有移到废纸篓。\(failed.isEmpty ? "" : "残留也有没移走的。")")
+            throw ToolError(failed.isEmpty ? L("应用没有移到废纸篓。") : L("应用没有移到废纸篓。残留也有没移走的。"))
         }
         if !failed.isEmpty {
-            throw ToolError("应用已移到废纸篓。这些残留没能移走：\(failed.prefix(4).joined(separator: "、"))")
+            throw ToolError(L("应用已移到废纸篓。这些残留没能移走：%@", failed.prefix(4).joined(separator: L("、"))))
         }
     }
 
@@ -521,35 +521,35 @@ nonisolated enum CacheClean {
     }
 
     nonisolated static let specs: [Spec] = [
-        Spec(id: "user-caches", title: "用户缓存", detail: "应用重新打开后会再生成。", relative: "Library/Caches", selected: true),
-        Spec(id: "user-logs", title: "用户日志", detail: "诊断日志，删了不影响文件。", relative: "Library/Logs", selected: true),
-        Spec(id: "trash", title: "废纸篓", detail: "清空当前用户的废纸篓。", relative: ".Trash", selected: true),
-        Spec(id: "xcode-derived", title: "Xcode 派生数据", detail: "下次编译会重新生成，第一次会慢一些。", relative: "Library/Developer/Xcode/DerivedData", selected: false),
-        Spec(id: "xcode-devices", title: "Xcode 设备支持文件", detail: "插上设备后会重新生成。", relative: "Library/Developer/Xcode/iOS DeviceSupport", also: [
+        Spec(id: "user-caches", title: L("用户缓存"), detail: L("应用重新打开后会再生成。"), relative: "Library/Caches", selected: true),
+        Spec(id: "user-logs", title: L("用户日志"), detail: L("诊断日志，删了不影响文件。"), relative: "Library/Logs", selected: true),
+        Spec(id: "trash", title: L("废纸篓"), detail: L("清空当前用户的废纸篓。"), relative: ".Trash", selected: true),
+        Spec(id: "xcode-derived", title: L("Xcode 派生数据"), detail: L("下次编译会重新生成，第一次会慢一些。"), relative: "Library/Developer/Xcode/DerivedData", selected: false),
+        Spec(id: "xcode-devices", title: L("Xcode 设备支持文件"), detail: L("插上设备后会重新生成。"), relative: "Library/Developer/Xcode/iOS DeviceSupport", also: [
             "Library/Developer/Xcode/watchOS DeviceSupport",
             "Library/Developer/Xcode/tvOS DeviceSupport",
             "Library/Developer/Xcode/visionOS DeviceSupport"
         ], selected: false),
-        Spec(id: "simulator", title: "模拟器缓存", detail: "模拟器下次启动会再生成。", relative: "Library/Developer/CoreSimulator/Caches", selected: false),
-        Spec(id: "homebrew", title: "Homebrew 缓存", detail: "已下载的安装包。下次安装会重新下载。", relative: "Library/Caches/Homebrew", selected: false),
-        Spec(id: "npm", title: "npm 缓存", detail: "只清缓存目录，不删已安装的包。", relative: ".npm/_cacache", selected: false),
-        Spec(id: "pnpm", title: "pnpm 仓库", detail: "已下载的包。下次安装会重新下载。", relative: "Library/pnpm/store", selected: false),
-        Spec(id: "yarn", title: "Yarn 缓存", detail: "已下载的包。不删项目里的 node_modules。", relative: ".cache/yarn", selected: false),
-        Spec(id: "pip", title: "pip 缓存", detail: "已下载的 Python 包。", relative: "Library/Caches/pip", selected: false),
-        Spec(id: "uv", title: "uv 缓存", detail: "已下载的 Python 包。", relative: ".cache/uv", selected: false),
-        Spec(id: "go", title: "Go 构建缓存", detail: "编译缓存。下次构建会重新生成。", relative: "Library/Caches/go-build", selected: false),
-        Spec(id: "go-mod", title: "Go 模块缓存", detail: "已下载的模块。下次构建会重新下载。", relative: "go/pkg/mod", selected: false),
-        Spec(id: "cargo", title: "Rust 下载缓存", detail: "crates 的压缩包。已检出的源码不动。", relative: ".cargo/registry/cache", selected: false),
-        Spec(id: "gradle", title: "Gradle 缓存", detail: "已下载的依赖。下次构建会重新下载。", relative: ".gradle/caches", selected: false),
-        Spec(id: "maven", title: "Maven 仓库", detail: "已下载的依赖。项目源码不动。", relative: ".m2/repository", selected: false),
-        Spec(id: "cocoapods", title: "CocoaPods 仓库", detail: "spec 仓库。下次 pod install 会再拉。", relative: ".cocoapods/repos", selected: false),
-        Spec(id: "pub", title: "Pub 缓存", detail: "已下载的 Dart 包。", relative: ".pub-cache/hosted", selected: false),
-        Spec(id: "cursor", title: "Cursor 缓存", detail: "界面缓存和日志。对话和设置不在这里。", relative: "Library/Application Support/Cursor/Cache", also: [
+        Spec(id: "simulator", title: L("模拟器缓存"), detail: L("模拟器下次启动会再生成。"), relative: "Library/Developer/CoreSimulator/Caches", selected: false),
+        Spec(id: "homebrew", title: L("Homebrew 缓存"), detail: L("已下载的安装包。下次安装会重新下载。"), relative: "Library/Caches/Homebrew", selected: false),
+        Spec(id: "npm", title: L("npm 缓存"), detail: L("只清缓存目录，不删已安装的包。"), relative: ".npm/_cacache", selected: false),
+        Spec(id: "pnpm", title: L("pnpm 仓库"), detail: L("已下载的包。下次安装会重新下载。"), relative: "Library/pnpm/store", selected: false),
+        Spec(id: "yarn", title: L("Yarn 缓存"), detail: L("已下载的包。不删项目里的 node_modules。"), relative: ".cache/yarn", selected: false),
+        Spec(id: "pip", title: L("pip 缓存"), detail: L("已下载的 Python 包。"), relative: "Library/Caches/pip", selected: false),
+        Spec(id: "uv", title: L("uv 缓存"), detail: L("已下载的 Python 包。"), relative: ".cache/uv", selected: false),
+        Spec(id: "go", title: L("Go 构建缓存"), detail: L("编译缓存。下次构建会重新生成。"), relative: "Library/Caches/go-build", selected: false),
+        Spec(id: "go-mod", title: L("Go 模块缓存"), detail: L("已下载的模块。下次构建会重新下载。"), relative: "go/pkg/mod", selected: false),
+        Spec(id: "cargo", title: L("Rust 下载缓存"), detail: L("crates 的压缩包。已检出的源码不动。"), relative: ".cargo/registry/cache", selected: false),
+        Spec(id: "gradle", title: L("Gradle 缓存"), detail: L("已下载的依赖。下次构建会重新下载。"), relative: ".gradle/caches", selected: false),
+        Spec(id: "maven", title: L("Maven 仓库"), detail: L("已下载的依赖。项目源码不动。"), relative: ".m2/repository", selected: false),
+        Spec(id: "cocoapods", title: L("CocoaPods 仓库"), detail: L("spec 仓库。下次 pod install 会再拉。"), relative: ".cocoapods/repos", selected: false),
+        Spec(id: "pub", title: L("Pub 缓存"), detail: L("已下载的 Dart 包。"), relative: ".pub-cache/hosted", selected: false),
+        Spec(id: "cursor", title: L("Cursor 缓存"), detail: L("界面缓存和日志。对话和设置不在这里。"), relative: "Library/Application Support/Cursor/Cache", also: [
             "Library/Application Support/Cursor/CachedData",
             "Library/Application Support/Cursor/Code Cache",
             "Library/Application Support/Cursor/logs"
         ], selected: false),
-        Spec(id: "claude", title: "Claude 缓存", detail: "界面缓存。对话记录不在这里。", relative: "Library/Application Support/Claude/Cache", also: [
+        Spec(id: "claude", title: L("Claude 缓存"), detail: L("界面缓存。对话记录不在这里。"), relative: "Library/Application Support/Claude/Cache", also: [
             "Library/Application Support/Claude/Code Cache",
             ".claude/paste-cache",
             ".claude/shell-snapshots"
@@ -629,7 +629,7 @@ nonisolated enum CacheClean {
         let allowed = specs.contains { spec in
             locations(for: spec, home: home).contains { $0.standardizedFileURL.resolvingSymlinksInPath().path == rootPath }
         }
-        guard allowed else { throw ToolError("这个位置不在可清理的范围内") }
+        guard allowed else { throw ToolError(L("这个位置不在可清理的范围内")) }
         let manager = FileManager.default
         let children = (try? manager.contentsOfDirectory(at: root, includingPropertiesForKeys: nil, options: [])) ?? []
         var freed: UInt64 = 0
@@ -644,7 +644,7 @@ nonisolated enum CacheClean {
                 failed += 1
             }
         }
-        if failed > 0, freed == 0 { throw ToolError("这些文件正在使用，没有清理掉") }
+        if failed > 0, freed == 0 { throw ToolError(L("这些文件正在使用，没有清理掉")) }
         return freed
     }
 
@@ -729,20 +729,20 @@ nonisolated enum SpeedTune {
     }
 
     nonisolated static func quit(pid: Int32, name: String) throws {
-        guard pid > 1, pid != ProcessInfo.processInfo.processIdentifier else { throw ToolError("不能结束这个进程") }
-        guard !protected.contains(name) else { throw ToolError("不能结束这个进程") }
-        guard kill(pid, SIGTERM) == 0 else { throw ToolError("没有结束这个进程") }
+        guard pid > 1, pid != ProcessInfo.processInfo.processIdentifier else { throw ToolError(L("不能结束这个进程")) }
+        guard !protected.contains(name) else { throw ToolError(L("不能结束这个进程")) }
+        guard kill(pid, SIGTERM) == 0 else { throw ToolError(L("没有结束这个进程")) }
     }
 
     nonisolated static func setAgent(label: String, enabled: Bool, home: URL = FileManager.default.homeDirectoryForCurrentUser) throws {
-        guard safeLabel(label) else { throw ToolError("这个启动项不能从这里改") }
+        guard safeLabel(label) else { throw ToolError(L("这个启动项不能从这里改")) }
         let plist = home.appendingPathComponent("Library/LaunchAgents/\(label).plist")
-        guard FileManager.default.fileExists(atPath: plist.path) else { throw ToolError("只改用户目录里的启动代理") }
+        guard FileManager.default.fileExists(atPath: plist.path) else { throw ToolError(L("只改用户目录里的启动代理")) }
         let action = enabled ? "enable" : "disable"
         let result = MachineCommand.run("/bin/launchctl", [action, "gui/\(getuid())/\(label)"])
         guard result.status == 0 else {
             let detail = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
-            throw ToolError(detail.isEmpty ? "没有改成这个状态" : detail)
+            throw ToolError(detail.isEmpty ? L("没有改成这个状态") : detail)
         }
     }
 
@@ -754,7 +754,7 @@ nonisolated enum SpeedTune {
         if output.status == 0 { return nil }
         let detail = output.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
         if detail.isEmpty || detail.contains("User canceled") || detail.contains("-128") {
-            return "没有继续。取消密码框后不会改任何东西。"
+            return L("没有继续。取消密码框后不会改任何东西。")
         }
         return detail
     }

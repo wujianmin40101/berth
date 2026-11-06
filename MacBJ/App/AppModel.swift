@@ -118,7 +118,7 @@ final class AppModel {
 
     func requestBind(_ kind: RuntimeKind, version: String) {
         guard version != "system", VersionToken.validated(version) != nil else {
-            projectNotice = "这个版本不能绑定。"
+            projectNotice = L("这个版本不能绑定。")
             return
         }
         guard projectDirectory != nil else {
@@ -134,17 +134,17 @@ final class AppModel {
             return
         }
         let folder = projectDirectory.lastPathComponent
-        let file = ProjectPins.fileName(for: kind) ?? "版本文件"
+        let file = ProjectPins.fileName(for: kind) ?? L("版本文件")
         do {
             try provider(for: kind).writeProjectPin(version, in: projectDirectory)
             pins[kind] = provider(for: kind).projectPin(in: projectDirectory)
-            projectNotice = "已把 \(kind.title) \(version) 写入「\(folder)」的 \(file)。"
+            projectNotice = L("已把 %@ %@ 写入「%@」的 %@。", kind.title, version, folder, file)
             refreshProjectSummaries()
         } catch let failure as RuntimeFailure {
             projectNotice = failure.message
             failures[kind] = failure.message
         } catch {
-            projectNotice = "没有写入 \(file)。"
+            projectNotice = L("没有写入 %@。", file)
             failures[kind] = projectNotice
         }
     }
@@ -178,7 +178,7 @@ final class AppModel {
     func selectProject(path: String) {
         guard let record = projects.first(where: { $0.path == path }) else { return }
         guard let url = resolve(record) else {
-            projectNotice = "「\(record.name)」的目录已经不在了。"
+            projectNotice = L("「%@」的目录已经不在了。", record.name)
             return
         }
         if selectedProjectPath != path {
@@ -226,7 +226,7 @@ final class AppModel {
             } catch let failure as RuntimeFailure {
                 failures[kind] = failure.message
             } catch {
-                failures[kind] = "没有保存别名。"
+                failures[kind] = L("没有保存别名。")
             }
         }
     }
@@ -241,7 +241,7 @@ final class AppModel {
             } catch let failure as RuntimeFailure {
                 failures[kind] = failure.message
             } catch {
-                failures[kind] = "没有删除别名。"
+                failures[kind] = L("没有删除别名。")
             }
         }
     }
@@ -259,29 +259,29 @@ final class AppModel {
         } catch let failure as RuntimeFailure {
             failures[selectedKind] = failure.message
         } catch {
-            failures[selectedKind] = "没有写入 shell 配置。"
+            failures[selectedKind] = L("没有写入 shell 配置。")
         }
     }
 
     func sidebarDetail(for kind: RuntimeKind) -> String {
         if loading.contains(kind), snapshots[kind] == nil {
-            return "读取中"
+            return L("读取中")
         }
         guard let snapshot = snapshots[kind] else { return " " }
         if let current = snapshot.installed.first(where: \.isCurrent) {
             return current.title
         }
         if snapshot.installed.isEmpty {
-            return snapshot.backend == .missing ? "未检测" : "无版本"
+            return snapshot.backend == .missing ? L("未检测") : L("无版本")
         }
         return snapshot.backend.title
     }
 
     func primaryTitle(for kind: RuntimeKind) -> String {
-        guard let version = selectedVersion(kind) else { return "设为全局默认" }
-        if !version.isInstalled { return "安装此版本" }
-        if version.isCurrent { return "已是默认" }
-        return "设为全局默认"
+        guard let version = selectedVersion(kind) else { return L("设为全局默认") }
+        if !version.isInstalled { return L("安装此版本") }
+        if version.isCurrent { return L("已是默认") }
+        return L("设为全局默认")
     }
 
     func canPerformPrimary(_ kind: RuntimeKind) -> Bool {
@@ -311,11 +311,11 @@ final class AppModel {
     }
 
     func projectTitle(for kind: RuntimeKind) -> String {
-        guard let projectDirectory else { return "未选择项目" }
+        guard let projectDirectory else { return L("未选择项目") }
         let folder = projectDirectory.lastPathComponent
         guard let pin = pins[kind] else { return folder }
-        let suffix = pin.writable ? pin.version : "\(pin.version)（只读）"
-        return "\(folder) · \(pin.fileName) \(suffix)"
+        let suffix = pin.writable ? pin.version : L("%@（只读）", pin.version)
+        return L("%@ · %@ %@", folder, pin.fileName, suffix)
     }
 
     func pinMatches(_ version: RuntimeVersion, kind: RuntimeKind) -> Bool {
@@ -329,9 +329,9 @@ final class AppModel {
             let url = URL(fileURLWithPath: record.path, isDirectory: true)
             let parts = RuntimeKind.allCases.compactMap { kind -> String? in
                 guard let pin = provider(for: kind).projectPin(in: url) else { return nil }
-                return "\(kind.title) \(pin.version)"
+                return L("%@ %@", kind.title, pin.version)
             }
-            next[record.path] = parts.isEmpty ? "还没有绑定" : parts.joined(separator: " · ")
+            next[record.path] = parts.isEmpty ? L("还没有绑定") : parts.joined(separator: " · ")
         }
         projectSummaries = next
     }
@@ -378,7 +378,7 @@ final class AppModel {
 
     private func setGlobal(_ kind: RuntimeKind, version: RuntimeVersion, backend: RuntimeBackend) {
         guard let script = provider(for: kind).setGlobalScript(backend: backend, version: version.name) else {
-            failures[kind] = "这个版本不能切换。"
+            failures[kind] = L("这个版本不能切换。")
             return
         }
         switching.insert(kind)
@@ -394,7 +394,7 @@ final class AppModel {
                 failures[kind] = failure.message
             } catch {
                 switching.remove(kind)
-                failures[kind] = "切换没有成功。"
+                failures[kind] = L("切换没有成功。")
             }
         }
     }
@@ -405,7 +405,7 @@ final class AppModel {
             version: version.name,
             mirror: mirrors[kind] ?? .official
         ) else {
-            failures[kind] = "这个版本不能安装。"
+            failures[kind] = L("这个版本不能安装。")
             return
         }
         run(kind, script: script, timeout: 600)
@@ -414,7 +414,7 @@ final class AppModel {
     private func uninstall(_ kind: RuntimeKind) {
         guard let snapshot = snapshots[kind], let version = selectedVersion(kind) else { return }
         guard let script = provider(for: kind).uninstallScript(backend: snapshot.backend, version: version.name) else {
-            failures[kind] = "这个版本不能卸载。"
+            failures[kind] = L("这个版本不能卸载。")
             return
         }
         run(kind, script: script, timeout: 120)
@@ -435,14 +435,14 @@ final class AppModel {
             let output = await Shell.run(script, timeout: timeout, handle: handle, onOutput: handler)
             guard session.isCurrent(token) else { return }
             if handle.isCancelled || output.status == 130 {
-                session.append("\n已取消。\n")
+                session.append(L("\n已取消。\n"))
                 session.finish(token)
                 return
             }
             session.finish(token)
             if output.status != 0 {
                 let message = ShellMessage.display(output.stderr.isEmpty ? output.stdout : output.stderr)
-                failures[kind] = message.isEmpty ? "命令没有成功。" : message
+                failures[kind] = message.isEmpty ? L("命令没有成功。") : message
             } else {
                 refresh(kind)
             }

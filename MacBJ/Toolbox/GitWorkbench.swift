@@ -34,7 +34,7 @@ enum GitWorkbench {
 
     static func save(name: String, email: String, proxy: String) async -> String? {
         for value in [name, email, proxy] where !ShellQuote.isSingleLine(value) {
-            return "不能包含换行。"
+            return L("不能包含换行。")
         }
         if let problem = ProxyDraft.problem(in: proxy) { return problem }
         let script = [
@@ -47,10 +47,10 @@ enum GitWorkbench {
 
     static func addAlias(name: String, command: String) async -> String? {
         guard name.wholeMatch(of: /^[A-Za-z][A-Za-z0-9-]*$/) != nil else {
-            return "别名只能用字母、数字和连字符。"
+            return L("别名只能用字母、数字和连字符。")
         }
         guard ShellQuote.isSingleLine(command), !command.trimmingCharacters(in: .whitespaces).isEmpty else {
-            return "别名对应的命令不能为空，也不能换行。"
+            return L("别名对应的命令不能为空，也不能换行。")
         }
         let script = "git config --global alias.\(name) \(ShellQuote.singleQuoted(command))"
         return failure(of: await Shell.run(script, timeout: 20))
@@ -70,7 +70,7 @@ enum GitWorkbench {
             timeout: 20
         )
         if output.stdout.contains("EXISTS") {
-            return "已经有一把 ed25519 公钥，没有覆盖它。"
+            return L("已经有一把 ed25519 公钥，没有覆盖它。")
         }
         return failure(of: output)
     }
@@ -87,7 +87,7 @@ enum GitWorkbench {
         guard output.status != 0 else { return nil }
         let detail = (output.stderr.isEmpty ? output.stdout : output.stderr)
             .trimmingCharacters(in: .whitespacesAndNewlines)
-        return detail.isEmpty ? "Git 没有保存。" : detail
+        return detail.isEmpty ? L("Git 没有保存。") : detail
     }
 }
 

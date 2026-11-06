@@ -76,7 +76,7 @@ struct OfficialRuntimeTests {
         #expect(script?.contains(sha) == true)
         #expect(script?.contains("shasum -a 256 -c -") == true)
         #expect(script?.contains("$root/go/") == true)
-        #expect(script?.contains("拒绝写入意外路径。") == true)
+        #expect(script?.contains(L("拒绝写入意外路径。")) == true)
 
         let java = OfficialScripts.install(kind: .java, release: OfficialRelease(
             version: "27.0.1+1",

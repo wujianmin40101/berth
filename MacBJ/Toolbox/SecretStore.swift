@@ -36,14 +36,14 @@ enum SecretStore {
 
     static func save(name: String, value: String) -> String? {
         if let problem = EnvName.problem(in: name) { return problem }
-        guard ShellQuote.isSingleLine(value) else { return "变量值不能包含换行。" }
+        guard ShellQuote.isSingleLine(value) else { return L("变量值不能包含换行。") }
         let base = query(name)
         SecItemDelete(base as CFDictionary)
         var add = base
         add[kSecValueData as String] = Data(value.utf8)
         add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         let status = SecItemAdd(add as CFDictionary, nil)
-        return status == errSecSuccess ? nil : "钥匙串没有保存。"
+        return status == errSecSuccess ? nil : L("钥匙串没有保存。")
     }
 
     static func remove(name: String) {

@@ -30,20 +30,20 @@ nonisolated enum ProjectPins {
 
     static func write(kind: RuntimeKind, version: String, in directory: URL) throws {
         guard let version = VersionToken.validated(version) else {
-            throw RuntimeFailure(message: "这个版本不能写入项目。")
+            throw RuntimeFailure(message: L("这个版本不能写入项目。"))
         }
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: directory.path, isDirectory: &isDirectory), isDirectory.boolValue else {
-            throw RuntimeFailure(message: "项目目录不存在。")
+            throw RuntimeFailure(message: L("项目目录不存在。"))
         }
         guard let fileName = fileName(for: kind) else {
-            throw RuntimeFailure(message: "这个版本不能写入项目。")
+            throw RuntimeFailure(message: L("这个版本不能写入项目。"))
         }
         let url = directory.appending(path: fileName)
         do {
             try (version + "\n").write(to: url, atomically: true, encoding: .utf8)
         } catch {
-            throw RuntimeFailure(message: "没有写入 \(fileName)。")
+            throw RuntimeFailure(message: L("没有写入 %@。", fileName))
         }
     }
 

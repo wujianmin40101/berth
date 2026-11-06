@@ -12,11 +12,11 @@ private enum MachineSection: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .memory: "内存分布"
-        case .uninstall: "卸载应用"
-        case .caches: "清理缓存"
-        case .disk: "启动磁盘"
-        case .speed: "优化速度"
+        case .memory: L("内存分布")
+        case .uninstall: L("卸载应用")
+        case .caches: L("清理缓存")
+        case .disk: L("启动磁盘")
+        case .speed: L("优化速度")
         }
     }
 
@@ -157,7 +157,7 @@ private struct DiskMapChart: View {
         }
         .pointerStyle(hovered.flatMap { find($0, in: nodes) }?.canEnter == true ? .link : .default)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("启动磁盘矩形树图")
+        .accessibilityLabel(L("启动磁盘矩形树图"))
     }
 
     private func block(_ node: DiskNode, frame: CGRect) -> some View {
@@ -223,12 +223,12 @@ private struct DiskMapChart: View {
     }
 
     private func sizeLine(_ node: DiskNode) -> String {
-        (node.partial ? "约 " : "") + ByteText.string(node.bytes)
+        (node.partial ? L("约 ") : "") + ByteText.string(node.bytes)
     }
 
     private func detail(_ node: DiskNode) -> String {
         let share = parentBytes > 0 ? Double(node.bytes) / Double(parentBytes) * 100 : 0
-        return "\(sizeLine(node))，占 \(String(format: "%.1f", share))%"
+        return L("%@，占 %@", sizeLine(node), String(format: "%.1f%%", share))
     }
 
     private func find(_ path: String, in level: [DiskNode]) -> DiskNode? {
@@ -301,7 +301,7 @@ private struct DiskMapLoading: View {
             .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("正在统计启动磁盘")
+        .accessibilityLabel(L("正在统计启动磁盘"))
     }
 
     private func tileFace(name: String, ready: DiskNode?, index: Int) -> some View {
@@ -311,7 +311,7 @@ private struct DiskMapLoading: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(name)
                     .lineLimit(1)
-                Text(ready.map(sizeLine) ?? "计算中")
+                Text(ready.map(sizeLine) ?? L("计算中"))
                     .lineLimit(1)
             }
             .font(.system(size: 12, weight: .medium))
@@ -324,7 +324,7 @@ private struct DiskMapLoading: View {
     }
 
     private func sizeLine(_ node: DiskNode) -> String {
-        (node.partial ? "约 " : "") + ByteText.string(node.bytes)
+        (node.partial ? L("约 ") : "") + ByteText.string(node.bytes)
     }
 
     private func split(_ rect: CGRect) -> CGRect {
@@ -344,7 +344,7 @@ private struct DiskPathBar: View {
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 0) {
-            crumb(title: "启动盘", path: nil, current: crumbs.isEmpty)
+            crumb(title: L("启动盘"), path: nil, current: crumbs.isEmpty)
             ForEach(Array(crumbs.enumerated()), id: \.element.id) { index, node in
                 Image(systemName: "chevron.right")
                     .font(.system(size: 10, weight: .semibold))
@@ -366,7 +366,7 @@ private struct DiskPathBar: View {
         }
         .animation(reduceMotion ? nil : .timingCurve(0.16, 1, 0.3, 1, duration: 0.24), value: crumbs.map(\.path))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("路径")
+        .accessibilityLabel(L("路径"))
     }
 
     private func crumb(title: String, path: String?, current: Bool) -> some View {
@@ -408,7 +408,7 @@ private struct CrumbFade: ViewModifier {
 struct DiskMapTool: View {
     @Environment(\.palette) private var palette
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var volume = VolumeSpace(name: "启动磁盘", total: 0, available: 0)
+    @State private var volume = VolumeSpace(name: L("启动磁盘"), total: 0, available: 0)
     @State private var nodes: [DiskNode] = []
     @State private var scanning = true
     @State private var fullDisk = true
@@ -444,27 +444,27 @@ struct DiskMapTool: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 PageHeader(
-                    title: "启动磁盘",
-                    subtitle: "按目录看空间用在哪。各项加起来不一定等于已用，系统快照不在这些目录里。",
+                    title: L("启动磁盘"),
+                    subtitle: L("按目录看空间用在哪。各项加起来不一定等于已用，系统快照不在这些目录里。"),
                     help: FeatureHelp.disk
                 )
-                Text("已用 \(ByteText.string(volume.used)) / \(ByteText.string(volume.total))，可用 \(ByteText.string(volume.available))")
+                Text(L("已用 %@ / %@，可用 %@", ByteText.string(volume.used), ByteText.string(volume.total), ByteText.string(volume.available)))
                     .font(.system(size: 13, weight: .semibold))
                 if !fullDisk {
                     WorkspacePanel {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("没有完全磁盘访问权限。启动盘总容量、应用程序大小和上次使用时间不用它也能读到。邮件、信息、Safari 这些受保护的目录会计得偏小。系统不会弹出授权框，要在系统设置里打开。")
+                            Text(L("没有完全磁盘访问权限。启动盘总容量、应用程序大小和上次使用时间不用它也能读到。邮件、信息、Safari 这些受保护的目录会计得偏小。系统不会弹出授权框，要在系统设置里打开。"))
                                 .font(.system(size: 12))
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
-                            Button("打开完全磁盘访问权限") { openFullDiskAccess() }
+                            Button(L("打开完全磁盘访问权限")) { openFullDiskAccess() }
                                 .buttonStyle(TintCapsuleStyle())
                         }
                     }
                 }
                 DiskPathBar(
                     crumbs: focusChain,
-                    currentBytes: focusChain.last.map { ($0.partial ? "约 " : "") + ByteText.string($0.bytes) },
+                    currentBytes: focusChain.last.map { ($0.partial ? L("约 ") : "") + ByteText.string($0.bytes) },
                     reduceMotion: reduceMotion,
                     onSelect: { move(to: $0) }
                 )
@@ -473,7 +473,7 @@ struct DiskMapTool: View {
                 if scanning {
                     let pending = DiskMap.rootNames.filter { name in !nodes.contains { $0.name == name } }
                     if !pending.isEmpty {
-                        Text("正在统计 \(pending.joined(separator: "、"))。")
+                        Text(L("正在统计 %@。", pending.joined(separator: L("、"))))
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                     }
@@ -518,7 +518,7 @@ struct DiskMapTool: View {
                 .font(.system(size: 13, weight: .semibold))
                 .lineLimit(1)
             Spacer(minLength: 8)
-            Text(node.pending ? "计算中" : (node.partial ? "约 " : "") + ByteText.string(node.bytes))
+            Text(node.pending ? L("计算中") : (node.partial ? L("约 ") : "") + ByteText.string(node.bytes))
                 .font(.system(size: 13, weight: .medium, design: .monospaced))
                 .foregroundStyle(.secondary)
             if node.canEnter {
@@ -624,10 +624,10 @@ struct MemoryMapTool: View {
         ScrollView {
         VStack(alignment: .leading, spacing: 14) {
             PageHeader(
-                title: "内存分布",
-                subtitle: "应用、联动、压缩和缓存文件分开算，口径跟活动监视器一致。下面是按应用合计的实际占用。",
+                title: L("内存分布"),
+                subtitle: L("应用、联动、压缩和缓存文件分开算，口径跟活动监视器一致。下面是按应用合计的实际占用。"),
                 help: FeatureHelp.memory,
-                actionTitle: "刷新",
+                actionTitle: L("刷新"),
                 actionIcon: "arrow.clockwise",
                 actionDisabled: loading
             ) {
@@ -643,14 +643,14 @@ struct MemoryMapTool: View {
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                         HStack(spacing: 12) {
-                            Text("物理内存 \(ByteText.string(report.total))")
+                            Text(L("物理内存 %@", ByteText.string(report.total)))
                                 .font(.system(size: 13, weight: .semibold))
                             Spacer(minLength: 8)
-                            Button(donut ? "条形图" : "环形图") {
+                            Button(donut ? L("条形图") : L("环形图")) {
                                 donut.toggle()
                             }
                             .buttonStyle(FieldMenuStyle())
-                            .accessibilityLabel(donut ? "切换为条形图" : "切换为环形图")
+                            .accessibilityLabel(donut ? L("切换为条形图") : L("切换为环形图"))
                         }
                         Group {
                             if donut {
@@ -691,10 +691,10 @@ struct MemoryMapTool: View {
                 }
                 WorkspacePanel {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("占得多的应用")
+                        Text(L("占得多的应用"))
                             .font(.system(size: 13, weight: .semibold))
                         if report.apps.isEmpty {
-                            Text("没有读到应用占用。")
+                            Text(L("没有读到应用占用。"))
                                 .font(.system(size: 13))
                                 .foregroundStyle(.secondary)
                         } else {
@@ -709,13 +709,13 @@ struct MemoryMapTool: View {
         .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .confirmationDialog("退出这个应用", isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }), titleVisibility: .visible) {
-            Button("退出", role: .destructive) {
+        .confirmationDialog(L("退出这个应用"), isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }), titleVisibility: .visible) {
+            Button(L("退出"), role: .destructive) {
                 if let pending { Task { await quit(pending) } }
             }
-            Button("取消", role: .cancel) {}
+            Button(L("取消"), role: .cancel) {}
         } message: {
-            Text(pending.map { "退出「\($0.name)」。没保存的内容会丢失。" } ?? "")
+            Text(pending.map { L("退出「%@」。没保存的内容会丢失。", $0.name) } ?? "")
         }
         .task { await reload() }
     }
@@ -744,7 +744,7 @@ struct MemoryMapTool: View {
                 .frame(width: 56, alignment: .trailing)
                 .accessibilityLabel("CPU \(cpuText(app.cpu))")
             if canQuit(app) {
-                Button("退出") { pending = app }
+                Button(L("退出")) { pending = app }
                     .buttonStyle(FieldMenuStyle())
             }
         }
@@ -790,7 +790,7 @@ struct MemoryMapTool: View {
             let running = NSRunningApplication.runningApplications(withBundleIdentifier: identifier)
             if !running.isEmpty {
                 running.forEach { $0.terminate() }
-                message = "已要求「\(app.name)」退出。"
+                message = L("已要求「%@」退出。", app.name)
                 try? await Task.sleep(for: .milliseconds(400))
                 await reload()
                 return
@@ -804,7 +804,7 @@ struct MemoryMapTool: View {
                 try SpeedTune.quit(pid: pid, name: app.name)
                 sent = true
             }
-            message = sent ? "已要求「\(app.name)」退出。" : "不能退出这个进程。"
+            message = sent ? L("已要求「%@」退出。", app.name) : L("不能退出这个进程。")
             try? await Task.sleep(for: .milliseconds(300))
             await reload()
         } catch let error as ToolError {
@@ -838,7 +838,7 @@ private struct MemorySplitBar: View {
         }
         .frame(height: 40)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("内存分布条")
+        .accessibilityLabel(L("内存分布条"))
     }
 
     private func segment(_ slice: MemorySlice, width: CGFloat) -> some View {
@@ -930,7 +930,7 @@ private struct MemoryDonut: View {
                 }
             }
             VStack(spacing: 2) {
-                Text(focus?.title ?? "合计")
+                Text(focus?.title ?? L("合计"))
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
                 Text(ByteText.string(focus?.bytes ?? total))
@@ -963,7 +963,7 @@ private struct MemoryDonut: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(focus.map { "\($0.title) \(ByteText.string($0.bytes))" } ?? "内存环形图，合计 \(ByteText.string(total))")
+        .accessibilityLabel(focus.map { L("%@ %@", $0.title, ByteText.string($0.bytes)) } ?? L("内存环形图，合计 %@", ByteText.string(total)))
     }
 
     private func label(_ arc: DonutArc, active: Bool) -> some View {
@@ -1118,16 +1118,16 @@ struct AppUninstallTool: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             PageHeader(
-                title: "卸载应用",
-                subtitle: "移到废纸篓，并带走用户目录里只属于它的偏好、缓存和支持文件。和别的应用共用的文件会留下。",
+                title: L("卸载应用"),
+                subtitle: L("移到废纸篓，并带走用户目录里只属于它的偏好、缓存和支持文件。和别的应用共用的文件会留下。"),
                 help: FeatureHelp.uninstall,
-                actionTitle: "刷新",
+                actionTitle: L("刷新"),
                 actionIcon: "arrow.clockwise",
                 actionDisabled: loading
             ) {
                 Task { await reload() }
             }
-            TextField("搜索应用或包标识", text: $query)
+            TextField(L("搜索应用或包标识"), text: $query)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))
                 .padding(.horizontal, 10)
@@ -1148,18 +1148,18 @@ struct AppUninstallTool: View {
                     }
                 }
                 if visible.isEmpty {
-                    Text(apps.isEmpty ? "没有找到应用程序文件夹里的应用。" : "没有匹配的应用。")
+                    Text(apps.isEmpty ? L("没有找到应用程序文件夹里的应用。") : L("没有匹配的应用。"))
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                 }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .confirmationDialog("卸载这个应用", isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }), titleVisibility: .visible) {
-            Button("移到废纸篓", role: .destructive) {
+        .confirmationDialog(L("卸载这个应用"), isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }), titleVisibility: .visible) {
+            Button(L("移到废纸篓"), role: .destructive) {
                 if let pending { Task { await uninstall(pending) } }
             }
-            Button("取消", role: .cancel) {}
+            Button(L("取消"), role: .cancel) {}
         } message: {
             Text(pending.map(confirm) ?? "")
         }
@@ -1179,10 +1179,10 @@ struct AppUninstallTool: View {
             }
             Spacer(minLength: 8)
             if app.removable {
-                Button("卸载") { pending = app }
+                Button(L("卸载")) { pending = app }
                     .buttonStyle(FieldMenuStyle())
             } else {
-                Text(app.reason ?? "不能卸载")
+                Text(app.reason ?? L("不能卸载"))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
             }
@@ -1191,20 +1191,20 @@ struct AppUninstallTool: View {
     }
 
     private func detail(_ app: InstalledApp) -> String {
-        let size = app.bytes.map { ByteText.string($0) } ?? "计算大小"
+        let size = app.bytes.map { ByteText.string($0) } ?? L("计算大小")
         let version = app.version.isEmpty ? "" : " · \(app.version)"
-        let used = app.lastUsed.map { "上次使用 \(LastUsedText.string($0))" } ?? "没有使用记录"
-        let leftover = app.leftovers.isEmpty ? "没有单独的残留" : "\(app.leftovers.count) 项残留"
+        let used = app.lastUsed.map { L("上次使用 %@", LastUsedText.string($0)) } ?? L("没有使用记录")
+        let leftover = app.leftovers.isEmpty ? L("没有单独的残留") : L("%lld 项残留", app.leftovers.count)
         return "\(size)\(version) · \(used) · \(leftover)"
     }
 
     private func confirm(_ app: InstalledApp) -> String {
         if app.leftovers.isEmpty {
-            return "把「\(app.name)」移到废纸篓。没有找到只属于它的残留。"
+            return L("把「%@」移到废纸篓。没有找到只属于它的残留。", app.name)
         }
-        let names = app.leftovers.prefix(5).map { URL(fileURLWithPath: $0).lastPathComponent }.joined(separator: "、")
-        let more = app.leftovers.count > 5 ? " 等 \(app.leftovers.count) 项" : ""
-        return "把「\(app.name)」和这些残留一起移到废纸篓：\(names)\(more)。"
+        let names = app.leftovers.prefix(5).map { URL(fileURLWithPath: $0).lastPathComponent }.joined(separator: L("、"))
+        let more = app.leftovers.count > 5 ? L(" 等 %lld 项", app.leftovers.count) : ""
+        return L("把「%@」和这些残留一起移到废纸篓：%@%@。", app.name, names, more)
     }
 
     private func reload() async {
@@ -1238,7 +1238,7 @@ struct AppUninstallTool: View {
         do {
             try await AppQuit.waitUntilQuit(bundleID: app.bundleID)
             try await Task.detached { try AppUninstall.trash(app) }.value
-            message = "「\(app.name)」已移到废纸篓。"
+            message = L("「%@」已移到废纸篓。", app.name)
             await reload()
         } catch let error as ToolError {
             message = error.text
@@ -1255,7 +1255,7 @@ private struct UninstallLoading: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("正在读取应用")
+            Text(L("正在读取应用"))
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
                 .padding(.bottom, 8)
@@ -1279,7 +1279,7 @@ private struct UninstallLoading: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("正在读取应用")
+        .accessibilityLabel(L("正在读取应用"))
     }
 }
 
@@ -1306,7 +1306,7 @@ private enum AppQuit {
             if NSRunningApplication.runningApplications(withBundleIdentifier: bundleID).isEmpty { return }
             try await Task.sleep(for: .milliseconds(120))
         }
-        throw ToolError("应用没有退出，可能有没保存的内容。退出后再卸载。")
+        throw ToolError(L("应用没有退出，可能有没保存的内容。退出后再卸载。"))
     }
 }
 
@@ -1323,10 +1323,10 @@ struct CacheCleanTool: View {
         ScrollView {
         VStack(alignment: .leading, spacing: 14) {
             PageHeader(
-                title: "清理缓存",
-                subtitle: "只清理可以重新生成的缓存、日志和废纸篓。个人文件不在这里。",
+                title: L("清理缓存"),
+                subtitle: L("只清理可以重新生成的缓存、日志和废纸篓。个人文件不在这里。"),
                 help: FeatureHelp.caches,
-                actionTitle: "刷新",
+                actionTitle: L("刷新"),
                 actionIcon: "arrow.clockwise",
                 actionDisabled: loading || cleaning
             ) {
@@ -1338,12 +1338,12 @@ struct CacheCleanTool: View {
             WorkspacePanel {
                 VStack(alignment: .leading, spacing: 10) {
                     if targets.isEmpty, !loading {
-                        Text("没有找到可清理的内容。")
+                        Text(L("没有找到可清理的内容。"))
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                     }
                     if loading, targets.isEmpty {
-                        Text("正在统计缓存、日志和废纸篓。")
+                        Text(L("正在统计缓存、日志和废纸篓。"))
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                     }
@@ -1358,14 +1358,14 @@ struct CacheCleanTool: View {
                                         .foregroundStyle(.secondary)
                                 }
                                 Spacer()
-                                Text(target.pending ? "计算中" : (target.partial ? "约 " : "") + ByteText.string(target.bytes))
+                                Text(target.pending ? L("计算中") : (target.partial ? L("约 ") : "") + ByteText.string(target.bytes))
                                     .font(.system(size: 13, weight: .medium, design: .monospaced))
                                     .foregroundStyle(.secondary)
                             }
                         }
                         .toggleStyle(.checkbox)
                     }
-                    Button(cleaning ? "正在清理" : "清理选中") { confirm = true }
+                    Button(cleaning ? L("正在清理") : L("清理选中")) { confirm = true }
                         .buttonStyle(TintCapsuleStyle())
                         .disabled(selected.isEmpty || cleaning || selected.contains(where: \.pending))
                 }
@@ -1374,11 +1374,11 @@ struct CacheCleanTool: View {
         .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .confirmationDialog("清理选中的内容", isPresented: $confirm, titleVisibility: .visible) {
-            Button("清理", role: .destructive) { Task { await clean() } }
-            Button("取消", role: .cancel) {}
+        .confirmationDialog(L("清理选中的内容"), isPresented: $confirm, titleVisibility: .visible) {
+            Button(L("清理"), role: .destructive) { Task { await clean() } }
+            Button(L("取消"), role: .cancel) {}
         } message: {
-            Text(selected.isEmpty ? "" : "将删除：\(selected.map(\.title).joined(separator: "、"))。这些内容可以重新生成。")
+            Text(selected.isEmpty ? "" : L("将删除：%@。这些内容可以重新生成。", selected.map(\.title).joined(separator: L("、"))))
         }
         .task { await reload() }
     }
@@ -1428,7 +1428,7 @@ struct CacheCleanTool: View {
         cleaning = true
         do {
             let freed = try await Task.detached { try CacheClean.clean(ids: ids) }.value
-            message = "已清理 \(ByteText.string(freed))。"
+            message = L("已清理 %@。", ByteText.string(freed))
         } catch let error as ToolError {
             message = error.text
         } catch {
@@ -1452,10 +1452,10 @@ struct SpeedTuneTool: View {
         ScrollView {
         VStack(alignment: .leading, spacing: 14) {
             PageHeader(
-                title: "优化速度",
-                subtitle: "释放未使用的内存、刷新 DNS、结束占资源的进程，以及开关用户自己的启动代理。",
+                title: L("优化速度"),
+                subtitle: L("释放未使用的内存、刷新 DNS、结束占资源的进程，以及开关用户自己的启动代理。"),
                 help: FeatureHelp.speed,
-                actionTitle: "刷新",
+                actionTitle: L("刷新"),
                 actionIcon: "arrow.clockwise",
                 actionDisabled: loading || busy
             ) {
@@ -1466,28 +1466,28 @@ struct SpeedTuneTool: View {
             }
             WorkspacePanel {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(report?.summary ?? "正在读取内存。")
+                    Text(report?.summary ?? L("正在读取内存。"))
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                     HStack(spacing: 8) {
-                        Button(busy ? "正在执行" : "释放内存") { Task { await purge() } }
+                        Button(busy ? L("正在执行") : L("释放内存")) { Task { await purge() } }
                             .buttonStyle(TintCapsuleStyle())
                             .disabled(busy)
-                        Button("刷新 DNS") { Task { await flushDNS() } }
+                        Button(L("刷新 DNS")) { Task { await flushDNS() } }
                             .buttonStyle(FieldMenuStyle())
                             .disabled(busy)
                     }
-                    Text("这两项会弹出系统密码框。取消后不会改任何东西。")
+                    Text(L("这两项会弹出系统密码框。取消后不会改任何东西。"))
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                 }
             }
             WorkspacePanel {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("占资源的进程")
+                    Text(L("占资源的进程"))
                         .font(.system(size: 13, weight: .semibold))
                     if hogs.isEmpty {
-                        Text("现在没有明显占着 CPU 或内存的进程。")
+                        Text(L("现在没有明显占着 CPU 或内存的进程。"))
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                     }
@@ -1504,7 +1504,7 @@ struct SpeedTuneTool: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Button("结束") { pending = hog }
+                            Button(L("结束")) { pending = hog }
                                 .buttonStyle(FieldMenuStyle())
                         }
                         .padding(.vertical, 4)
@@ -1513,13 +1513,13 @@ struct SpeedTuneTool: View {
             }
             WorkspacePanel {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("启动代理")
+                    Text(L("启动代理"))
                         .font(.system(size: 13, weight: .semibold))
-                    Text("只列出用户目录里的启动代理。系统级服务和登录时打开的应用留在系统设置里。")
+                    Text(L("只列出用户目录里的启动代理。系统级服务和登录时打开的应用留在系统设置里。"))
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                     if items.isEmpty {
-                        Text("没有用户启动代理。")
+                        Text(L("没有用户启动代理。"))
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                     }
@@ -1530,7 +1530,7 @@ struct SpeedTuneTool: View {
                         ))
                         .font(.system(size: 13))
                     }
-                    Button("打开系统设置里的登录项") {
+                    Button(L("打开系统设置里的登录项")) {
                         NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.LoginItems-Settings.extension")!)
                     }
                     .buttonStyle(FieldMenuStyle())
@@ -1540,13 +1540,13 @@ struct SpeedTuneTool: View {
         .frame(maxWidth: .infinity, alignment: .topLeading)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .confirmationDialog("结束这个进程", isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }), titleVisibility: .visible) {
-            Button("结束", role: .destructive) {
+        .confirmationDialog(L("结束这个进程"), isPresented: Binding(get: { pending != nil }, set: { if !$0 { pending = nil } }), titleVisibility: .visible) {
+            Button(L("结束"), role: .destructive) {
                 if let pending { Task { await quit(pending) } }
             }
-            Button("取消", role: .cancel) {}
+            Button(L("取消"), role: .cancel) {}
         } message: {
-            Text(pending.map { "结束「\($0.name)」。没保存的内容会丢失。" } ?? "")
+            Text(pending.map { L("结束「%@」。没保存的内容会丢失。", $0.name) } ?? "")
         }
         .task { await reload() }
     }
@@ -1564,14 +1564,14 @@ struct SpeedTuneTool: View {
 
     private func purge() async {
         busy = true
-        message = await SpeedTune.administrator("/usr/sbin/purge") ?? "已要求系统释放未使用的内存。"
+        message = await SpeedTune.administrator("/usr/sbin/purge") ?? L("已要求系统释放未使用的内存。")
         busy = false
         await reload()
     }
 
     private func flushDNS() async {
         busy = true
-        message = await SpeedTune.administrator("/usr/bin/dscacheutil -flushcache; /usr/bin/killall -HUP mDNSResponder") ?? "已刷新 DNS 缓存。"
+        message = await SpeedTune.administrator("/usr/bin/dscacheutil -flushcache; /usr/bin/killall -HUP mDNSResponder") ?? L("已刷新 DNS 缓存。")
         busy = false
     }
 
@@ -1579,7 +1579,7 @@ struct SpeedTuneTool: View {
         pending = nil
         do {
             try SpeedTune.quit(pid: hog.pid, name: hog.name)
-            message = "已结束「\(hog.name)」。"
+            message = L("已结束「%@」。", hog.name)
             await reload()
         } catch let error as ToolError {
             message = error.text
@@ -1594,7 +1594,7 @@ struct SpeedTuneTool: View {
             if let index = items.firstIndex(where: { $0.path == item.path }) {
                 items[index].enabled = enabled
             }
-            message = enabled ? "已启用「\(item.name)」。" : "已停用「\(item.name)」。下次登录生效。"
+            message = enabled ? L("已启用「%@」。", item.name) : L("已停用「%@」。下次登录生效。", item.name)
         } catch let error as ToolError {
             message = error.text
         } catch {

@@ -21,31 +21,31 @@ enum ToolboxPlugin: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .ports: "端口"
-        case .processes: "进程"
-        case .services: "本地服务"
+        case .ports: L("端口")
+        case .processes: L("进程")
+        case .services: L("本地服务")
         case .hosts: "Hosts"
-        case .secrets: "密钥"
+        case .secrets: L("密钥")
         case .git: "Git"
-        case .proxy: "代理"
-        case .snippets: "命令收藏"
-        case .utilities: "格式工具"
-        case .machine: "本机"
+        case .proxy: L("代理")
+        case .snippets: L("命令收藏")
+        case .utilities: L("格式工具")
+        case .machine: L("本机")
         }
     }
 
     var summary: String {
         switch self {
-        case .ports: "查看谁占用了端口，并结束那个进程。"
-        case .processes: "查看正在运行的 Node 和 Python，以及内存占用。"
-        case .services: "启动、停止项目里的开发服务，并看输出。"
-        case .hosts: "编辑本机域名解析。保存前会校验，并先做备份。"
-        case .secrets: "变量放在钥匙串里。启动本地服务时可以注入，默认不显示原文。"
-        case .git: "查看和修改全局用户名、邮箱、别名，以及生成 SSH 公钥。"
-        case .proxy: "只使用你自己填写的代理。不会写入 shell 配置。"
-        case .snippets: "把常用命令留在这里，需要时复制或运行。"
-        case .utilities: "格式化 JSON、转换时间戳，以及 Base64 和 URL 编解码。"
-        case .machine: "内存分布、卸载应用、清理缓存和优化速度放在一起。"
+        case .ports: L("查看谁占用了端口，并结束那个进程。")
+        case .processes: L("查看正在运行的 Node 和 Python，以及内存占用。")
+        case .services: L("启动、停止项目里的开发服务，并看输出。")
+        case .hosts: L("编辑本机域名解析。保存前会校验，并先做备份。")
+        case .secrets: L("变量放在钥匙串里。启动本地服务时可以注入，默认不显示原文。")
+        case .git: L("查看和修改全局用户名、邮箱、别名，以及生成 SSH 公钥。")
+        case .proxy: L("只使用你自己填写的代理。不会写入 shell 配置。")
+        case .snippets: L("把常用命令留在这里，需要时复制或运行。")
+        case .utilities: L("格式化 JSON、转换时间戳，以及 Base64 和 URL 编解码。")
+        case .machine: L("内存分布、卸载应用、清理缓存和优化速度放在一起。")
         }
     }
 

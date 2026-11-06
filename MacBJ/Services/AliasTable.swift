@@ -41,7 +41,7 @@ nonisolated enum AliasTable {
 
     static func upsert(kind: RuntimeKind, name: String, version: String, in text: String) throws -> String {
         guard let name = AliasName.validated(name), let version = VersionToken.validated(version) else {
-            throw RuntimeFailure(message: "别名或版本号不能使用。default 请用「设为全局默认」。")
+            throw RuntimeFailure(message: L("别名或版本号不能使用。default 请用「设为全局默认」。"))
         }
         var records = records(from: text).filter { !($0.kind == kind && $0.name == name) }
         records.append(AliasRecord(kind: kind, name: name, version: version))
@@ -83,7 +83,7 @@ nonisolated enum AliasTable {
         } catch let failure as RuntimeFailure {
             throw failure
         } catch {
-            throw RuntimeFailure(message: "没有保存别名。")
+            throw RuntimeFailure(message: L("没有保存别名。"))
         }
     }
 }

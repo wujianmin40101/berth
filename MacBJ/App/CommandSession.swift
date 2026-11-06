@@ -54,7 +54,7 @@ final class CommandSession {
     func cancel() {
         guard isRunning, !isCancelling else { return }
         isCancelling = true
-        append("\n正在取消…\n")
+        append(L("\n正在取消…\n"))
         handle?.cancel()
         task?.cancel()
     }

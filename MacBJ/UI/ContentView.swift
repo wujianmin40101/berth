@@ -39,6 +39,7 @@ struct ContentView: View {
         }
         .background(palette.canvas)
         .environment(\.palette, palette)
+        .environment(\.locale, LanguageStore.shared.locale)
         .preferredColorScheme(theme)
         .toolbar {
             ToolbarItem(placement: .navigation) {
@@ -66,7 +67,7 @@ struct ContentView: View {
             }
         }
         .alert(
-            "绑定版本",
+            L("绑定版本"),
             isPresented: Binding(
                 get: { model.bindPrompt != nil },
                 set: { if !$0 { model.bindPrompt = nil } }
@@ -75,43 +76,43 @@ struct ContentView: View {
         ) { prompt in
             switch prompt {
             case .needProject:
-                Button("新增项目") {
+                Button(L("新增项目")) {
                     show(.projects)
                     chooseProject = true
                 }
-                Button("取消", role: .cancel) {}
+                Button(L("取消"), role: .cancel) {}
             case .confirm(let kind, let version):
-                Button("绑定") { model.writeProjectPin(kind, version: version) }
-                Button("取消", role: .cancel) {}
+                Button(L("绑定")) { model.writeProjectPin(kind, version: version) }
+                Button(L("取消"), role: .cancel) {}
             }
         } message: { prompt in
             switch prompt {
             case .needProject:
-                Text("还没有选中的项目。新增一个目录后，才能把版本写进去。")
+                Text(L("还没有选中的项目。新增一个目录后，才能把版本写进去。"))
             case .confirm(let kind, let version):
-                let folder = model.projectDirectory?.lastPathComponent ?? "项目"
-                let file = ProjectPins.fileName(for: kind) ?? "版本文件"
-                Text("把 \(kind.title) \(version) 写入「\(folder)」的 \(file)。")
+                let folder = model.projectDirectory?.lastPathComponent ?? L("项目")
+                let file = ProjectPins.fileName(for: kind) ?? L("版本文件")
+                Text(L("把 %@ %@ 写入「%@」的 %@。", kind.title, version, folder, file))
             }
         }
         .alert(
-            "从列表移除项目",
+            L("从列表移除项目"),
             isPresented: Binding(
                 get: { model.removingProject != nil },
                 set: { if !$0 { model.removingProject = nil } }
             ),
             presenting: model.removingProject
         ) { record in
-            Button("移除", role: .destructive) { model.removeProject(record) }
-            Button("取消", role: .cancel) {}
+            Button(L("移除"), role: .destructive) { model.removeProject(record) }
+            Button(L("取消"), role: .cancel) {}
         } message: { record in
-            Text("只从列表里去掉「\(record.name)」。磁盘上的目录和版本文件都会保留。")
+            Text(L("只从列表里去掉「%@」。磁盘上的目录和版本文件都会保留。", record.name))
         }
-        .confirmationDialog("卸载当前默认版本", isPresented: $model.confirmUninstall, titleVisibility: .visible) {
-            Button("仍要卸载", role: .destructive) { model.uninstallSelected() }
-            Button("取消", role: .cancel) {}
+        .confirmationDialog(L("卸载当前默认版本"), isPresented: $model.confirmUninstall, titleVisibility: .visible) {
+            Button(L("仍要卸载"), role: .destructive) { model.uninstallSelected() }
+            Button(L("取消"), role: .cancel) {}
         } message: {
-            Text("这是新终端会使用的版本。卸载后，离开项目目录时可能没有这个运行时。")
+            Text(L("这是新终端会使用的版本。卸载后，离开项目目录时可能没有这个运行时。"))
         }
         .sheet(isPresented: $model.showAliases) {
             AliasEditor(

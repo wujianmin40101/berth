@@ -200,7 +200,7 @@ nonisolated enum ShellHook {
         do {
             try installing(into: existing).write(to: zshrc, atomically: true, encoding: .utf8)
         } catch {
-            throw RuntimeFailure(message: "没有写入 shell 配置。")
+            throw RuntimeFailure(message: L("没有写入 shell 配置。"))
         }
     }
 

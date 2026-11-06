@@ -79,7 +79,7 @@ nonisolated struct PythonProvider: RuntimeProvider {
         case .pyenv, .uv, .missing:
             try AliasTable.upsert(kind: .python, name: name, version: version, at: AliasTable.fileURL())
         case .fnm, .nvm, .volta, .official:
-            throw RuntimeFailure(message: "这个 Python 管理器不能保存别名。")
+            throw RuntimeFailure(message: L("这个 Python 管理器不能保存别名。"))
         }
     }
 
@@ -88,7 +88,7 @@ nonisolated struct PythonProvider: RuntimeProvider {
         case .pyenv, .uv, .missing:
             try AliasTable.remove(kind: .python, name: name, at: AliasTable.fileURL())
         case .fnm, .nvm, .volta, .official:
-            throw RuntimeFailure(message: "这个 Python 管理器不能删除别名。")
+            throw RuntimeFailure(message: L("这个 Python 管理器不能删除别名。"))
         }
     }
 

@@ -9,22 +9,22 @@ struct AliasEditor: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("版本别名")
+            Text(L("版本别名"))
                 .font(.headline)
-            Text("脚本里可以用这个名字代替版本号。default 仍然用「设为全局默认」。")
+            Text(L("脚本里可以用这个名字代替版本号。default 仍然用「设为全局默认」。"))
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 8) {
-                TextField("名称", text: $name)
-                TextField("版本", text: $version)
-                Button("添加", action: onAdd)
+                TextField(L("名称"), text: $name)
+                TextField(L("版本"), text: $version)
+                Button(L("添加"), action: onAdd)
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || version.trimmingCharacters(in: .whitespaces).isEmpty)
             }
 
             if aliases.isEmpty {
-                Text("还没有别名。")
+                Text(L("还没有别名。"))
                     .foregroundStyle(.secondary)
             } else {
                 List(aliases) { alias in
@@ -34,7 +34,7 @@ struct AliasEditor: View {
                         Text(alias.version)
                             .font(.body.monospaced())
                             .foregroundStyle(.secondary)
-                        Button("删除") { onRemove(alias) }
+                        Button(L("删除")) { onRemove(alias) }
                             .buttonStyle(PlainPressStyle())
                     }
                 }
@@ -51,9 +51,9 @@ struct HookConfirmView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(status == .outdated ? "更新目录切换" : "启用目录切换")
+            Text(status == .outdated ? L("更新目录切换") : L("启用目录切换"))
                 .font(.headline)
-            Text("写入前会把 ~/.zshrc 备份为 ~/.zshrc.macbj-bak。进入有 .nvmrc 或 .python-version 的目录时切到对应版本，离开后回到全局默认。已经打开的终端要新开一个，或再 cd 一次。")
+            Text(L("写入前会把 ~/.zshrc 备份为 ~/.zshrc.macbj-bak。进入有 .nvmrc 或 .python-version 的目录时切到对应版本，离开后回到全局默认。已经打开的终端要新开一个，或再 cd 一次。"))
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -66,7 +66,7 @@ struct HookConfirmView: View {
             .frame(maxHeight: 220)
             HStack {
                 Spacer()
-                Button("写入 ~/.zshrc", action: onInstall)
+                Button(L("写入 ~/.zshrc"), action: onInstall)
                     .keyboardShortcut(.defaultAction)
             }
         }
@@ -81,7 +81,7 @@ struct CommandOutputBar: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(session.isRunning ? "正在执行" : "刚才执行的命令")
+            Text(session.isRunning ? L("正在执行") : L("刚才执行的命令"))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.secondary)
             Text(session.command)
@@ -89,7 +89,7 @@ struct CommandOutputBar: View {
                 .lineLimit(4)
                 .textSelection(.enabled)
             ScrollView {
-                Text(session.output.isEmpty ? "正在执行…" : session.output)
+                Text(session.output.isEmpty ? L("正在执行…") : session.output)
                     .font(.system(.caption, design: .monospaced))
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -98,11 +98,11 @@ struct CommandOutputBar: View {
             HStack {
                 Spacer()
                 if session.isRunning {
-                    Button(session.isCancelling ? "正在取消" : "取消") { session.cancel() }
+                    Button(session.isCancelling ? L("正在取消") : L("取消")) { session.cancel() }
                         .buttonStyle(TintCapsuleStyle())
                         .disabled(session.isCancelling)
                 } else {
-                    Button("关闭") { session.dismiss() }
+                    Button(L("关闭")) { session.dismiss() }
                         .buttonStyle(TintCapsuleStyle())
                 }
             }

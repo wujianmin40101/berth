@@ -98,13 +98,13 @@ final class ToolboxModel {
     func addService(name: String, directory: String, command: String, injectSecrets: Bool) -> String? {
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedCommand = command.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedName.isEmpty else { return "先写服务名称。" }
-        guard !trimmedCommand.isEmpty else { return "先写启动命令。" }
-        guard ShellQuote.isSingleLine(trimmedCommand) else { return "启动命令不能换行。" }
+        guard !trimmedName.isEmpty else { return L("先写服务名称。") }
+        guard !trimmedCommand.isEmpty else { return L("先写启动命令。") }
+        guard ShellQuote.isSingleLine(trimmedCommand) else { return L("启动命令不能换行。") }
         let folder = (directory as NSString).expandingTildeInPath
         var isDirectory: ObjCBool = false
         guard FileManager.default.fileExists(atPath: folder, isDirectory: &isDirectory), isDirectory.boolValue else {
-            return "项目目录不存在。"
+            return L("项目目录不存在。")
         }
         services.append(DevService(
             id: UUID(),
@@ -167,13 +167,13 @@ final class ToolboxModel {
         do {
             try process.run()
         } catch {
-            return "没有启动这个服务。"
+            return L("没有启动这个服务。")
         }
         processes[service.id] = process
         running.insert(service.id)
         ownedPIDs.insert(process.processIdentifier)
         rememberOwned()
-        appendLog(service.id, "正在执行\n\(service.command)\n")
+        appendLog(service.id, L("正在执行\n%@\n", service.command))
         return nil
     }
 
@@ -189,7 +189,7 @@ final class ToolboxModel {
     func addSnippet(title: String, command: String) -> String? {
         let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
         let script = command.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty, !script.isEmpty else { return "名称和命令都要填。" }
+        guard !name.isEmpty, !script.isEmpty else { return L("名称和命令都要填。") }
         snippets.append(CommandSnippet(id: UUID(), title: name, command: script))
         persist(snippets, name: "snippets.json")
         return nil
@@ -202,7 +202,7 @@ final class ToolboxModel {
 
     func addHostsProfile(name: String, body: String) -> String? {
         let title = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !title.isEmpty else { return "先给这份解析起个名字。" }
+        guard !title.isEmpty else { return L("先给这份解析起个名字。") }
         if let problem = HostsFile.problem(in: body) { return problem }
         hostsProfiles.append(HostsProfile(id: UUID(), name: title, body: body))
         persist(hostsProfiles, name: "hosts-profiles.json")
@@ -246,7 +246,7 @@ final class ToolboxModel {
             .map { ($0.0, $0.1.trimmingCharacters(in: .whitespacesAndNewlines)) }
             .filter { !$0.1.isEmpty }
             .map { "export \($0.0)=\(ShellQuote.singleQuoted($0.1))" }
-        guard !lines.isEmpty else { return .failure(ToolError("还没有填写代理。")) }
+        guard !lines.isEmpty else { return .failure(ToolError(L("还没有填写代理。"))) }
         return .success(lines.joined(separator: "\n"))
     }
 
@@ -264,7 +264,7 @@ final class ToolboxModel {
         }
         rememberOwned()
         running.remove(id)
-        appendLog(id, "\n服务已停止。\n")
+        appendLog(id, L("\n服务已停止。\n"))
     }
 
     private func persist<T: Encodable>(_ value: T, name: String) {

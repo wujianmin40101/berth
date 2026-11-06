@@ -65,7 +65,7 @@ nonisolated enum AllocatedSize {
 
     static func breakdown(_ path: String, deadline: Date, control: ScanControl? = nil) -> Breakdown {
         let root = tree(path, deadline: deadline, control: control)
-        let children = root.children.filter { $0.name != "其他" }.map {
+        let children = root.children.filter { $0.name != L("其他") }.map {
             Child(path: $0.path, bytes: $0.bytes, complete: $0.complete)
         }
         return Breakdown(bytes: root.bytes, complete: root.complete, children: children)
@@ -498,7 +498,7 @@ private nonisolated final class Walk: @unchecked Sendable {
         let meaningful = hidden >= 1_048_576 || (node.bytes >= 50 && hidden >= node.bytes / 50)
         if meaningful, !children.isEmpty {
             children.append(AllocatedSize.Entry(
-                name: "其他",
+                name: L("其他"),
                 path: node.path + "#other",
                 bytes: hidden,
                 complete: node.complete,

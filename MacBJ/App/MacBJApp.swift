@@ -17,6 +17,7 @@ struct MacBJApp: App {
     }
 
     var body: some Scene {
+        let _ = LanguageStore.shared.choice
         WindowGroup(ProductName.title) {
             ContentView()
         }

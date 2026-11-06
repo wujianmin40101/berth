@@ -23,8 +23,8 @@ nonisolated enum MirrorChoice: String, Equatable, Hashable, Sendable, CaseIterab
 
     var title: String {
         switch self {
-        case .official: "官方"
-        case .china: "国内"
+        case .official: L("官方")
+        case .china: L("国内")
         }
     }
 }
@@ -50,9 +50,9 @@ nonisolated enum HookStatus: Equatable, Sendable {
 
     var title: String {
         switch self {
-        case .missing: "启用目录切换"
-        case .installed: "目录切换已启用"
-        case .outdated: "更新目录切换"
+        case .missing: L("启用目录切换")
+        case .installed: L("目录切换已启用")
+        case .outdated: L("更新目录切换")
         }
     }
 }

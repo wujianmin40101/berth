@@ -15,10 +15,10 @@ struct NvmdTests {
     }
 
     @Test func `unknown commands and extra arguments fail`() {
-        #expect(NvmdArguments.parse(["deploy"]) == .rejected("没有这个命令: deploy"))
-        #expect(NvmdArguments.parse(["list", "all"]) == .rejected("list 不接受参数。"))
-        #expect(NvmdArguments.parse(["use"]) == .rejected("用法: nvmd use <版本> [--project]"))
-        #expect(NvmdArguments.parse(["which", "python"]) == .rejected("用法: nvmd which [node|npm]"))
-        #expect(NvmdArguments.parse(["install", "22 23"]) == .rejected("用法: nvmd install <版本>"))
+        #expect(NvmdArguments.parse(["deploy"]) == .rejected(L("没有这个命令: %@", "deploy")))
+        #expect(NvmdArguments.parse(["list", "all"]) == .rejected(L("list 不接受参数。")))
+        #expect(NvmdArguments.parse(["use"]) == .rejected(L("用法: nvmd use <版本> [--project]")))
+        #expect(NvmdArguments.parse(["which", "python"]) == .rejected(L("用法: nvmd which [node|npm]")))
+        #expect(NvmdArguments.parse(["install", "22 23"]) == .rejected(L("用法: nvmd install <版本>")))
     }
 }

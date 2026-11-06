@@ -12,12 +12,12 @@ enum CatalogStatus: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .all: "全部"
-        case .installed: "已安装"
-        case .missing: "未安装"
+        case .all: L("全部")
+        case .installed: L("已安装")
+        case .missing: L("未安装")
         case .lts: "LTS"
-        case .stable: "稳定"
-        case .deprecated: "已弃用"
+        case .stable: L("稳定")
+        case .deprecated: L("已弃用")
         }
     }
 }
@@ -30,8 +30,8 @@ enum CatalogScope: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .all: "全部发布"
-        case .latestLine: "各主版本最新"
+        case .all: L("全部发布")
+        case .latestLine: L("各主版本最新")
         }
     }
 }
@@ -122,7 +122,7 @@ struct VersionsPage: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            PageHeader(title: "版本", subtitle: "为下一次构建选对运行时。")
+            PageHeader(title: L("版本"), subtitle: L("为下一次构建选对运行时。"))
             RuntimeKindBar(model: model)
             catalogBody
                 .opacity(contentFading ? 0 : 1)
@@ -214,16 +214,16 @@ struct VersionsPage: View {
                     .accessibilityLabel(kind.title)
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(snapshot.map { "\($0.backend.title) · 全局环境" } ?? "全局环境")
+                    Text(snapshot.map { L("%@ · 全局环境", $0.backend.title) } ?? L("全局环境"))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
                         .help(snapshot?.backend.footnote ?? "")
                     HStack(spacing: 8) {
-                        Text(current.map(catalogTitle) ?? (snapshot == nil ? "—" : "未设置"))
+                        Text(current.map(catalogTitle) ?? (snapshot == nil ? "—" : L("未设置")))
                             .font(.system(size: 30, weight: .bold))
                             .accessibilityIdentifier("global-version")
                         if current != nil {
-                            Text("当前")
+                            Text(L("当前"))
                                 .font(.system(size: 11, weight: .semibold))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
@@ -239,19 +239,19 @@ struct VersionsPage: View {
                             .help(footnote)
                     }
                 }
-                statBox(value: countText(source.filter(\.isInstalled).count), label: "已安装")
+                statBox(value: countText(source.filter(\.isInstalled).count), label: L("已安装"))
                     .fixedSize()
-                statBox(value: countText(source.count), label: "版本")
+                statBox(value: countText(source.count), label: L("版本"))
                     .fixedSize()
             }
 
             if snapshot?.remoteFailed == true {
                 HStack(spacing: 10) {
-                    Text("远端版本目录没有读到。")
+                    Text(L("远端版本目录没有读到。"))
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                     if (model.mirrors[kind] ?? .official) == .official {
-                        Button("改用国内镜像") {
+                        Button(L("改用国内镜像")) {
                             model.setMirror(.china, for: kind)
                         }
                         .buttonStyle(TintCapsuleStyle())
@@ -278,12 +278,12 @@ struct VersionsPage: View {
         .overlay { DiagonalSweep(active: model.loading.contains(kind) && !reduceMotion) }
         .clipped()
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("正在读取版本目录")
+        .accessibilityLabel(L("正在读取版本目录"))
     }
 
     private var catalogHeader: some View {
         HStack(spacing: 8) {
-            Text("版本目录")
+            Text(L("版本目录"))
                 .font(.system(size: 16, weight: .semibold))
             Text(catalogCount)
                 .font(.system(size: 13))
@@ -297,9 +297,9 @@ struct VersionsPage: View {
         guard snapshot != nil else { return "—" }
         let filtered = rows.count != source.count || scope != .all || status != .all || !query.isEmpty
         if filtered {
-            return "\(rows.count) / \(source.count) 个版本"
+            return L("%lld / %lld 个版本", rows.count, source.count)
         }
-        return "\(source.count) 个版本"
+        return L("%lld 个版本", source.count)
     }
 
     private var catalogTools: some View {
@@ -307,7 +307,7 @@ struct VersionsPage: View {
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
-                TextField("搜索版本", text: $query)
+                TextField(L("搜索版本"), text: $query)
                     .textFieldStyle(.plain)
             }
             .font(.system(size: 13))
@@ -317,14 +317,14 @@ struct VersionsPage: View {
             .background(palette.field, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
             filterMenu(
-                title: status == .all ? "状态" : status.title,
+                title: status == .all ? L("状态") : status.title,
                 icon: "line.3.horizontal.decrease",
                 options: CatalogStatus.allCases.map { ($0.title, $0 == status) },
                 select: { index in status = CatalogStatus.allCases[index] }
             )
 
             filterMenu(
-                title: "视图",
+                title: L("视图"),
                 icon: "square.grid.2x2",
                 options: CatalogScope.allCases.map { ($0.title, $0 == scope) },
                 select: { index in scope = CatalogScope.allCases[index] }
@@ -336,12 +336,12 @@ struct VersionsPage: View {
                 scope = .all
                 model.refresh(kind)
             } label: {
-                Label("刷新", systemImage: "arrow.clockwise")
+                Label(L("刷新"), systemImage: "arrow.clockwise")
             }
             .buttonStyle(FieldMenuStyle())
             .disabled(model.loading.contains(kind))
             .keyboardShortcut("r", modifiers: .command)
-            .help("重新读取版本目录。终端执行 nvmd 之后，点这里才会更新显示。")
+            .help(L("重新读取版本目录。终端执行 nvmd 之后，点这里才会更新显示。"))
 
             Spacer()
         }
@@ -383,7 +383,7 @@ struct VersionsPage: View {
                 .background(palette.field.opacity(0.7))
 
             if visible.isEmpty {
-                Text(query.isEmpty ? "这个筛选下没有版本。" : "没有匹配的版本。")
+                Text(query.isEmpty ? L("这个筛选下没有版本。") : L("没有匹配的版本。"))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -414,7 +414,7 @@ struct VersionsPage: View {
                 .opacity(0.45)
 
             if snapshot == nil, !model.loading.contains(kind) {
-                Text("还没有版本数据")
+                Text(L("还没有版本数据"))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -432,7 +432,7 @@ struct VersionsPage: View {
                 .overlay { DiagonalSweep(active: !reduceMotion) }
                 .clipped()
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("正在读取版本目录")
+                .accessibilityLabel(L("正在读取版本目录"))
             }
         }
     }
@@ -467,19 +467,19 @@ struct VersionsPage: View {
     private func columnHeader() -> some View {
         if kind == .node {
             EqualColumns {
-                headerLabel("版本")
+                headerLabel(L("版本"))
                 headerLabel("V8")
                 headerLabel("NPM")
-                headerLabel("发布日期")
-                headerLabel("状态")
-                headerLabel("操作", trailing: true)
+                headerLabel(L("发布日期"))
+                headerLabel(L("状态"))
+                headerLabel(L("操作"), trailing: true)
             }
         } else {
             EqualColumns {
-                headerLabel("版本")
-                headerLabel("通道")
-                headerLabel("状态")
-                headerLabel("操作", trailing: true)
+                headerLabel(L("版本"))
+                headerLabel(L("通道"))
+                headerLabel(L("状态"))
+                headerLabel(L("操作"), trailing: true)
             }
         }
     }
@@ -531,7 +531,7 @@ struct VersionsPage: View {
                 .font(.system(size: 14, weight: .semibold))
                 .lineLimit(1)
             if version.name == newest {
-                Text("最新")
+                Text(L("最新"))
                     .font(.system(size: 11, weight: .semibold))
                     .padding(.horizontal, 6)
                     .padding(.vertical, 2)
@@ -557,7 +557,7 @@ struct VersionsPage: View {
     private func statusCell(_ version: RuntimeVersion) -> some View {
         let installed = version.isInstalled
         let symbol = version.isCurrent ? "checkmark.circle.fill" : (installed ? "checkmark.circle" : "circle")
-        let label = version.isCurrent ? "当前" : (installed ? "已安装" : "未安装")
+        let label = version.isCurrent ? L("当前") : (installed ? L("已安装") : L("未安装"))
         return HStack(spacing: 6) {
             Image(systemName: symbol)
             Text(label)
@@ -569,7 +569,7 @@ struct VersionsPage: View {
     private func operationCell(_ version: RuntimeVersion) -> some View {
         HStack(spacing: 6) {
             if version.isCurrent {
-                Text("使用中")
+                Text(L("使用中"))
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
             } else {
@@ -577,7 +577,7 @@ struct VersionsPage: View {
                     model.selection[kind] = version.id
                     model.performPrimary(kind)
                 } label: {
-                    Label(version.isInstalled ? "使用" : "安装", systemImage: version.isInstalled ? "checkmark" : "square.and.arrow.down")
+                    Label(version.isInstalled ? L("使用") : L("安装"), systemImage: version.isInstalled ? "checkmark" : "square.and.arrow.down")
                 }
                 .buttonStyle(TintCapsuleStyle())
                 .disabled(!canOperate)
@@ -585,11 +585,11 @@ struct VersionsPage: View {
 
             if version.isInstalled {
                 Menu {
-                    Button(model.projectDirectory.map { "绑定到 \($0.lastPathComponent)" } ?? "绑定到项目") {
+                    Button(model.projectDirectory.map { L("绑定到 %@", $0.lastPathComponent) } ?? L("绑定到项目")) {
                         model.selection[kind] = version.id
                         model.requestBind(kind, version: version.name)
                     }
-                    Button("卸载", role: .destructive) {
+                    Button(L("卸载"), role: .destructive) {
                         model.selection[kind] = version.id
                         model.requestUninstall(kind)
                     }
@@ -626,7 +626,7 @@ struct VersionsPage: View {
                 .font(.system(size: 12))
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            Button("关闭") { model.failures[kind] = nil }
+            Button(L("关闭")) { model.failures[kind] = nil }
                 .buttonStyle(PlainPressStyle())
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(palette.accent)
@@ -772,7 +772,7 @@ private struct RuntimeKindBar: View {
             }
             .background(palette.field, in: Capsule())
             .accessibilityElement(children: .contain)
-            .accessibilityLabel("运行时")
+            .accessibilityLabel(L("运行时"))
 
             if let selected = model.snapshots[model.selectedKind] {
                 Text(selected.backend.title)
@@ -782,7 +782,7 @@ private struct RuntimeKindBar: View {
             Button {
                 model.refresh(model.selectedKind)
             } label: {
-                Label("更新数据", systemImage: "arrow.triangle.2.circlepath")
+                Label(L("更新数据"), systemImage: "arrow.triangle.2.circlepath")
             }
             .buttonStyle(TintCapsuleStyle())
             .disabled(model.loading.contains(model.selectedKind))

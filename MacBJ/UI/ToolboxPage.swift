@@ -21,11 +21,11 @@ struct ToolboxPage: View {
     private var pluginList: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text("工具箱")
+                Text(L("工具箱"))
                     .font(.system(size: 13, weight: .semibold))
                     .padding(.horizontal, 4)
-                pluginSection("项目跑起来", ToolboxPlugin.allCases.filter(\.startsEnabled))
-                pluginSection("按需启用", ToolboxPlugin.allCases.filter { !$0.startsEnabled })
+                pluginSection(L("项目跑起来"), ToolboxPlugin.allCases.filter(\.startsEnabled))
+                pluginSection(L("按需启用"), ToolboxPlugin.allCases.filter { !$0.startsEnabled })
             }
             .padding(16)
         }
@@ -68,7 +68,7 @@ struct ToolboxPage: View {
             .toggleStyle(.switch)
             .controlSize(.mini)
             .labelsHidden()
-            .help(on ? "停用" : "启用")
+            .help(on ? L("停用") : L("启用"))
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 6)
@@ -93,10 +93,10 @@ struct ToolboxPage: View {
     private var disabledTool: some View {
         VStack(alignment: .leading, spacing: 12) {
             PageHeader(title: selection.title, subtitle: selection.summary, help: helpText(selection))
-            Text("这个工具默认没有打开。启用后会出现在左侧导航，版本管理不受影响。")
+            Text(L("这个工具默认没有打开。启用后会出现在左侧导航，版本管理不受影响。"))
                 .font(.system(size: 13))
                 .foregroundStyle(.secondary)
-            Button("启用\(selection.title)") {
+            Button(L("启用%@", selection.title)) {
                 update(selection, enabled: true)
             }
             .buttonStyle(TintCapsuleStyle())
@@ -121,10 +121,10 @@ struct ToolboxPage: View {
         case .snippets: FeatureHelp.snippets
         case .utilities: FeatureHelp.utilities
         case .machine:
-            """
-            本机把内存分布、卸载应用、清理缓存、启动磁盘和优化速度放在同一页。
-            启用后，每一块标题旁都有问号，可以单独看它会做什么。
-            """
+            [
+                L("本机把内存分布、卸载应用、清理缓存、启动磁盘和优化速度放在同一页。"),
+                L("启用后，每一块标题旁都有问号，可以单独看它会做什么。"),
+            ].joined(separator: "\n")
         }
     }
 }

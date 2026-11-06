@@ -29,9 +29,9 @@ struct ThemeSwitchButton: View {
         )
         .background(ThemeAnchor(host: host))
         .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .help(isDark ? "浅色模式" : "深色模式")
-        .accessibilityLabel(isDark ? "切换到浅色模式" : "切换到深色模式")
-        .accessibilityValue(isDark ? "深色" : "浅色")
+        .help(isDark ? L("浅色模式") : L("深色模式"))
+        .accessibilityLabel(isDark ? L("切换到浅色模式") : L("切换到深色模式"))
+        .accessibilityValue(isDark ? L("深色") : L("浅色"))
     }
 }
 

@@ -120,7 +120,7 @@ nonisolated enum Shell {
         let output = Output(
             status: timedOut ? 124 : (control.isCancelled ? 130 : process.terminationStatus),
             stdout: stdout.text,
-            stderr: timedOut ? "命令超时。" : stderr.text
+            stderr: timedOut ? L("命令超时。") : stderr.text
         )
         if output.status != 0 {
             log.error("command failed, status \(output.status, privacy: .public)")

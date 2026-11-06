@@ -18,7 +18,7 @@ nonisolated struct DiskNode: Equatable, Identifiable, Sendable {
     var id: String { path }
 
     var canEnter: Bool {
-        name != "其他" && children.contains { $0.name != "其他" && $0.bytes > 0 }
+        name != L("其他") && children.contains { $0.name != L("其他") && $0.bytes > 0 }
     }
 }
 
@@ -129,7 +129,7 @@ nonisolated enum DiskMap {
         } else if let regular = values?.volumeAvailableCapacity {
             available = UInt64(regular)
         }
-        let name = values?.volumeName ?? "启动磁盘"
+        let name = values?.volumeName ?? L("启动磁盘")
         return VolumeSpace(name: name, total: total, available: available)
     }
 
@@ -147,7 +147,7 @@ nonisolated enum DiskMap {
         let name: String
         if let title {
             name = title
-        } else if entry.name == "其他" {
+        } else if entry.name == L("其他") {
             name = entry.name
         } else if entry.path.hasSuffix(".app") {
             name = URL(fileURLWithPath: entry.path).deletingPathExtension().lastPathComponent

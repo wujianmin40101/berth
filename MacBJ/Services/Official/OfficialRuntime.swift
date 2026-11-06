@@ -166,7 +166,7 @@ nonisolated enum OfficialScripts {
         \(download(url: url, sha256: kind == .rust ? nil : digest))
         \(extract(kind))
         test -x "$dest/\(tool.executable)"
-        printf '%s\\n' '安装完成。'
+        printf '%s\\n' \(ShellLiteral.singleQuoted(L("安装完成。")))
         """
     }
 
@@ -184,7 +184,7 @@ nonisolated enum OfficialScripts {
           awk -v k='\(key)' -v v="$ver" '!($1 == k && $2 == v)' "$file" > "$tmp"
           mv "$tmp" "$file"
         fi
-        printf '%s\\n' '已卸载。'
+        printf '%s\\n' \(ShellLiteral.singleQuoted(L("已卸载。")))
         """
     }
 
@@ -194,7 +194,7 @@ nonisolated enum OfficialScripts {
         return rooted + """
 
         if [ ! -x "$dest/\(tool.executable)" ]; then
-          printf '%s\\n' '先安装这个版本。' >&2
+          printf '%s\\n' \(ShellLiteral.singleQuoted(L("先安装这个版本。"))) >&2
           exit 1
         fi
         file="$root/global.tsv"
@@ -207,7 +207,7 @@ nonisolated enum OfficialScripts {
         fi
         printf '%s\\t%s\\n' '\(key)' "$ver" >> "$tmp"
         mv "$tmp" "$file"
-        printf '%s\\n' '已设为全局默认。'
+        printf '%s\\n' \(ShellLiteral.singleQuoted(L("已设为全局默认。")))
         """
     }
 
@@ -225,11 +225,11 @@ nonisolated enum OfficialScripts {
         ver=\(quoted)
         dest="$root/\(key)/$ver"
         case "$ver" in
-          ""|*[!A-Za-z0-9._+-]*|*..*) printf '%s\\n' '版本号不能使用。' >&2; exit 1 ;;
+          ""|*[!A-Za-z0-9._+-]*|*..*) printf '%s\\n' \(ShellLiteral.singleQuoted(L("版本号不能使用。"))) >&2; exit 1 ;;
         esac
         case "$dest" in
           "$root/\(key)/"*) ;;
-          *) printf '%s\\n' '拒绝写入意外路径。' >&2; exit 1 ;;
+          *) printf '%s\\n' \(ShellLiteral.singleQuoted(L("拒绝写入意外路径。"))) >&2; exit 1 ;;
         esac
         """
     }
@@ -237,18 +237,18 @@ nonisolated enum OfficialScripts {
     private static func download(url: String, sha256: String?) -> String {
         if let sha256 {
             return """
-            printf '%s\\n' "正在下载 $ver"
+            printf '%s %s\\n' \(ShellLiteral.singleQuoted(L("正在下载"))) "$ver"
             curl --proto '=https' --tlsv1.2 -fL --retry 3 --retry-delay 2 -o "$archive" '\(url)'
             printf '%s  %s\\n' '\(sha256)' "$archive" | shasum -a 256 -c -
             """
         }
         return """
-        printf '%s\\n' "正在下载 $ver"
+        printf '%s %s\\n' \(ShellLiteral.singleQuoted(L("正在下载"))) "$ver"
         curl --proto '=https' --tlsv1.2 -fL --retry 3 --retry-delay 2 -o "$archive" '\(url)'
         curl --proto '=https' --tlsv1.2 -fL --retry 3 --retry-delay 2 -o "$archive.sha256" '\(url).sha256'
         hash=$(awk 'NR==1 { print $1; exit }' "$archive.sha256")
         case "$hash" in
-          *[!0-9a-fA-F]*) printf '%s\\n' '校验和无效。' >&2; exit 1 ;;
+          *[!0-9a-fA-F]*) printf '%s\\n' \(ShellLiteral.singleQuoted(L("校验和无效。"))) >&2; exit 1 ;;
         esac
         [ "${#hash}" -eq 64 ] || exit 1
         printf '%s  %s\\n' "$hash" "$archive" | shasum -a 256 -c -
@@ -452,14 +452,14 @@ nonisolated struct OfficialProvider: RuntimeProvider {
 
     func setAlias(name: String, version: String, backend: RuntimeBackend) async throws {
         guard backend == .official else {
-            throw RuntimeFailure(message: "这个版本管理器不能保存别名。")
+            throw RuntimeFailure(message: L("这个版本管理器不能保存别名。"))
         }
         try AliasTable.upsert(kind: kind, name: name, version: version, at: AliasTable.fileURL())
     }
 
     func removeAlias(name: String, backend: RuntimeBackend) async throws {
         guard backend == .official else {
-            throw RuntimeFailure(message: "这个版本管理器不能删除别名。")
+            throw RuntimeFailure(message: L("这个版本管理器不能删除别名。"))
         }
         try AliasTable.remove(kind: kind, name: name, at: AliasTable.fileURL())
     }

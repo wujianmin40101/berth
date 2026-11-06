@@ -9,8 +9,8 @@ nonisolated enum ReleaseChannel: String, Equatable, Hashable, Sendable {
     var title: String {
         switch self {
         case .lts: "LTS"
-        case .stable: "稳定"
-        case .deprecated: "已弃用"
+        case .stable: L("稳定")
+        case .deprecated: L("已弃用")
         case .unknown: ""
         }
     }

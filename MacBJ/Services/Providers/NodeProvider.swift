@@ -69,7 +69,7 @@ nonisolated struct NodeProvider: RuntimeProvider {
             image="${VOLTA_HOME:-$HOME/.volta}/tools/image/node/\(bare)"
             case "$image" in
               "$HOME"/.volta/tools/image/node/*) rm -rf "$image" ;;
-              *) echo '拒绝删除意外路径。' >&2; exit 1 ;;
+              *) echo \(ShellLiteral.singleQuoted(L("拒绝删除意外路径。"))) >&2; exit 1 ;;
             esac
             """
         default:
@@ -108,18 +108,18 @@ nonisolated struct NodeProvider: RuntimeProvider {
         switch backend {
         case .nvm:
             guard let script = Self.aliasScript(backend: backend, name: name, version: version) else {
-                throw RuntimeFailure(message: "别名或版本号不能使用。default 请用「设为全局默认」。")
+                throw RuntimeFailure(message: L("别名或版本号不能使用。default 请用「设为全局默认」。"))
             }
             try await ShellCommand.succeed(script)
         case .fnm:
             guard let script = Self.aliasScript(backend: backend, name: name, version: version) else {
-                throw RuntimeFailure(message: "别名或版本号不能使用。default 请用「设为全局默认」。")
+                throw RuntimeFailure(message: L("别名或版本号不能使用。default 请用「设为全局默认」。"))
             }
             try await ShellCommand.succeed(script)
         case .volta, .missing:
             try AliasTable.upsert(kind: .node, name: name, version: version, at: AliasTable.fileURL())
         case .pyenv, .uv, .official:
-            throw RuntimeFailure(message: "这个 Node 管理器不能保存别名。")
+            throw RuntimeFailure(message: L("这个 Node 管理器不能保存别名。"))
         }
     }
 
@@ -139,7 +139,7 @@ nonisolated struct NodeProvider: RuntimeProvider {
 
     func removeAlias(name: String, backend: RuntimeBackend) async throws {
         guard let name = AliasName.validated(name) else {
-            throw RuntimeFailure(message: "这个别名不能删除。")
+            throw RuntimeFailure(message: L("这个别名不能删除。"))
         }
         switch backend {
         case .nvm:
@@ -149,7 +149,7 @@ nonisolated struct NodeProvider: RuntimeProvider {
         case .volta, .missing:
             try AliasTable.remove(kind: .node, name: name, at: AliasTable.fileURL())
         case .pyenv, .uv, .official:
-            throw RuntimeFailure(message: "这个 Node 管理器不能删除别名。")
+            throw RuntimeFailure(message: L("这个 Node 管理器不能删除别名。"))
         }
     }
 }

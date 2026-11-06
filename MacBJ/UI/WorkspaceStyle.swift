@@ -20,10 +20,10 @@ enum WorkspacePage: Hashable, Identifiable {
 
     var title: String {
         switch self {
-        case .versions: "版本"
-        case .projects: "项目"
-        case .toolbox: "工具"
-        case .settings: "设置"
+        case .versions: L("版本")
+        case .projects: L("项目")
+        case .toolbox: L("工具")
+        case .settings: L("设置")
         case .tool(let plugin): plugin.title
         }
     }
@@ -109,7 +109,7 @@ struct WorkspaceBreadcrumb: View {
                 .interpolation(.high)
                 .frame(width: 18, height: 18)
                 .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
-            Text("工作区")
+            Text(L("工作区"))
             Text("/")
                 .foregroundStyle(.tertiary)
             Text(page.title)
@@ -223,7 +223,7 @@ struct WorkspaceRail: View {
                     .frame(width: RailMetrics.icon, height: RailMetrics.icon)
                 if labelProgress > 0 {
                     Button(action: toggleTheme) {
-                        Text(isDark ? "深色模式" : "浅色模式")
+                        Text(isDark ? L("深色模式") : L("浅色模式"))
                             .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
@@ -241,7 +241,7 @@ struct WorkspaceRail: View {
             .contentShape(Rectangle())
             .onHover { trackHover("theme", inside: $0) }
             .overlay(alignment: .leading) {
-                railHint(id: "theme", title: isDark ? "深色模式" : "浅色模式", symbol: "circle.lefthalf.filled")
+                railHint(id: "theme", title: isDark ? L("深色模式") : L("浅色模式"), symbol: "circle.lefthalf.filled")
             }
             railButton(.settings)
         }
@@ -468,7 +468,7 @@ struct RailResizeHandle: View {
                 return .ignored
             }
         }
-        .accessibilityLabel("导航宽度")
+        .accessibilityLabel(L("导航宽度"))
         .accessibilityValue("\(Int(width.rounded()))")
         .accessibilityAdjustableAction { direction in
             switch direction {
@@ -577,7 +577,7 @@ struct PageHeader: View {
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(PlainPressStyle(iconOnly: true))
-                        .accessibilityLabel("\(title)的说明")
+                        .accessibilityLabel(L("%@的说明", title))
                     }
                 }
                 Text(subtitle)
@@ -675,7 +675,7 @@ extension View {
 }
 
 func catalogTitle(_ version: RuntimeVersion) -> String {
-    if version.name == "system" { return "系统" }
+    if version.name == "system" { return L("系统") }
     if version.name.hasPrefix("v"), version.name.dropFirst().first?.isNumber == true {
         return version.name
     }

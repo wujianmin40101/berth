@@ -38,8 +38,8 @@ struct ToolboxTests {
         #expect(HostsFile.problem(in: "127.0.0.1 localhost\n") == nil)
         #expect(HostsFile.problem(in: "::1 localhost ip6-localhost\n") == nil)
         #expect(HostsFile.problem(in: "10.0.0.8 example.test # note\n127.0.0.1 localhost\n") == nil)
-        #expect(HostsFile.problem(in: "127.0.0.1 localhost\nnot-an-ip demo.test\n") == "无法识别的地址：not-an-ip")
-        #expect(HostsFile.problem(in: "10.0.0.8 example.test\n") == "需要保留 localhost 这一行。")
+        #expect(HostsFile.problem(in: "127.0.0.1 localhost\nnot-an-ip demo.test\n") == L("无法识别的地址：%@", "not-an-ip"))
+        #expect(HostsFile.problem(in: "10.0.0.8 example.test\n") == L("需要保留 localhost 这一行。"))
     }
 
     @Test func `proxy and env names reject shell syntax`() throws {
@@ -59,7 +59,7 @@ struct ToolboxTests {
         #expect(values["https_proxy"] == nil)
         #expect(values["ALL_PROXY"] == nil)
         let rejected = ProxyDraft.serviceEnvironment(http: "http://bad;rm", https: "", all: "", bypass: "")
-        #expect(rejected == .failure(ToolError("代理地址里有不能用在终端环境变量里的字符。")))
+        #expect(rejected == .failure(ToolError(L("代理地址里有不能用在终端环境变量里的字符。"))))
     }
 
     @Test func `hosts command reads the pipe before the process exits`() {

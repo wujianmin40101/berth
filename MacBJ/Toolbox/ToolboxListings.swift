@@ -26,7 +26,7 @@ enum PortListing {
                 command = value
             case "n":
                 guard pid > 1, let port = port(in: value) else { continue }
-                rows.append(PortUse(command: command.isEmpty ? "未知进程" : command, pid: pid, address: value, port: port))
+                rows.append(PortUse(command: command.isEmpty ? L("未知进程") : command, pid: pid, address: value, port: port))
             default:
                 continue
             }
@@ -48,7 +48,7 @@ enum PortListing {
         let output = await Shell.run("/usr/sbin/lsof -nP -iTCP -sTCP:LISTEN -Fpcn", timeout: 12, login: false)
         if output.status != 0, output.stdout.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             let detail = output.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-            return .failure(ToolError(detail.isEmpty ? "没有读到端口占用。" : detail))
+            return .failure(ToolError(detail.isEmpty ? L("没有读到端口占用。") : detail))
         }
         return .success(parse(output.stdout))
     }
@@ -87,7 +87,7 @@ enum ProcessListing {
         let output = await Shell.run("/bin/ps -axo pid=,rss=,pcpu=,command=", timeout: 12, login: false)
         if output.status != 0 {
             let detail = output.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
-            return .failure(ToolError(detail.isEmpty ? "没有读到进程列表。" : detail))
+            return .failure(ToolError(detail.isEmpty ? L("没有读到进程列表。") : detail))
         }
         return .success(parse(output.stdout))
     }
@@ -96,7 +96,7 @@ enum ProcessListing {
 enum ProcessSignal {
     static func send(pid: Int32, force: Bool) async -> String? {
         let selfPID = ProcessInfo.processInfo.processIdentifier
-        guard pid > 1, pid != selfPID else { return "不能结束这个进程。" }
+        guard pid > 1, pid != selfPID else { return L("不能结束这个进程。") }
         await stopTree(pid: pid, force: force)
         return nil
     }

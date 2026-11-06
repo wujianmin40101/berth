@@ -67,7 +67,7 @@ nonisolated enum ShellCommand {
         let output = await Shell.run(script, timeout: timeout, onOutput: onOutput)
         guard output.status == 0 else {
             let message = ShellMessage.display(output.stderr.isEmpty ? output.stdout : output.stderr)
-            throw RuntimeFailure(message: message.isEmpty ? "命令没有成功。" : message)
+            throw RuntimeFailure(message: message.isEmpty ? L("命令没有成功。") : message)
         }
     }
 }
@@ -81,7 +81,7 @@ nonisolated enum MirrorScript {
         case (.node, .fnm):
             return "export FNM_NODE_DIST_MIRROR='https://npmmirror.com/mirrors/node'\n"
         case (.node, .volta):
-            return "echo 'Volta 不使用国内镜像，这次仍从官方地址下载。' >&2\n"
+            return L("echo 'Volta 不使用国内镜像，这次仍从官方地址下载。' >&2\n")
         case (.python, .pyenv):
             return "export PYTHON_BUILD_MIRROR_URL='https://mirrors.tuna.tsinghua.edu.cn/python'\n"
         case (.python, .uv):

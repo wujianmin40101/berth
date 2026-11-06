@@ -9,21 +9,21 @@ struct ProjectsPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 PageHeader(
-                    title: "项目",
-                    subtitle: "每个目录各自记住版本。可以新增、移除，选中后再绑定。"
+                    title: L("项目"),
+                    subtitle: L("每个目录各自记住版本。可以新增、移除，选中后再绑定。")
                 )
 
                 WorkspacePanel {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 8) {
-                            Text("项目")
+                            Text(L("项目"))
                                 .font(.system(size: 13, weight: .semibold))
                             Spacer(minLength: 8)
-                            Button("新增项目") { chooseProject = true }
+                            Button(L("新增项目")) { chooseProject = true }
                                 .buttonStyle(TintCapsuleStyle())
                         }
                         if model.projects.isEmpty {
-                            Text("还没有项目。新增一个目录后，可以分别绑定 Node、Python、Go、Java 和 Rust。")
+                            Text(L("还没有项目。新增一个目录后，可以分别绑定 Node、Python、Go、Java 和 Rust。"))
                                 .font(.system(size: 13))
                                 .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
@@ -41,14 +41,14 @@ struct ProjectsPage: View {
                 WorkspacePanel {
                     VStack(alignment: .leading, spacing: 14) {
                         HStack(spacing: 8) {
-                            Text("版本绑定")
+                            Text(L("版本绑定"))
                                 .font(.system(size: 13, weight: .semibold))
                             Spacer(minLength: 8)
-                            Button("刷新") { model.reloadPins() }
+                            Button(L("刷新")) { model.reloadPins() }
                                 .buttonStyle(FieldMenuStyle())
-                                .help("重新读取项目里的版本文件。终端执行 nvmd use --project 之后，点这里才会更新显示。")
+                                .help(L("重新读取项目里的版本文件。终端执行 nvmd use --project 之后，点这里才会更新显示。"))
                         }
-                        Text("Node 写入 .nvmrc，Python 写入 .python-version，Go、Java、Rust 分别写入 .go-version、.java-version、.rust-version。pyproject.toml 里的版本要求只读。")
+                        Text(L("Node 写入 .nvmrc，Python 写入 .python-version，Go、Java、Rust 分别写入 .go-version、.java-version、.rust-version。pyproject.toml 里的版本要求只读。"))
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                         if let notice = model.projectNotice {
@@ -68,7 +68,7 @@ struct ProjectsPage: View {
 
                 WorkspacePanel {
                     VStack(alignment: .leading, spacing: 10) {
-                        Text("进入目录自动切换")
+                        Text(L("进入目录自动切换"))
                             .font(.system(size: 13, weight: .semibold))
                         Text(hookDetail)
                             .font(.system(size: 13))
@@ -88,11 +88,11 @@ struct ProjectsPage: View {
     private var hookDetail: String {
         switch model.hookStatus {
         case .missing:
-            "还没有写进 ~/.zshrc。写上之后，cd 进有版本文件的目录会切换，离开后恢复全局。"
+            L("还没有写进 ~/.zshrc。写上之后，cd 进有版本文件的目录会切换，离开后恢复全局。")
         case .installed:
-            "已经写进 ~/.zshrc。新开一个终端后才会生效。"
+            L("已经写进 ~/.zshrc。新开一个终端后才会生效。")
         case .outdated:
-            "shell 里的脚本比现在这份旧。更新后，新开的终端会用新脚本。"
+            L("shell 里的脚本比现在这份旧。更新后，新开的终端会用新脚本。")
         }
     }
 
@@ -131,13 +131,13 @@ struct ProjectsPage: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
                     .truncationMode(.middle)
-                Text(model.projectSummaries[record.path] ?? "还没有绑定")
+                Text(model.projectSummaries[record.path] ?? L("还没有绑定"))
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .lineLimit(2)
             }
             Spacer(minLength: 8)
-            Button("移除") { model.removingProject = record }
+            Button(L("移除")) { model.removingProject = record }
                 .buttonStyle(PlainPressStyle())
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.secondary)
@@ -155,12 +155,12 @@ struct ProjectsPage: View {
     private func bindControl(_ kind: RuntimeKind, installed: [RuntimeVersion]) -> some View {
         Group {
             if model.projectDirectory == nil {
-                Button("绑定") { model.bindPrompt = .needProject }
+                Button(L("绑定")) { model.bindPrompt = .needProject }
                     .buttonStyle(TintCapsuleStyle())
             } else {
                 Menu {
                     if installed.isEmpty {
-                        Button("还没有已安装的版本") {}
+                        Button(L("还没有已安装的版本")) {}
                             .disabled(true)
                     } else {
                         ForEach(installed) { version in
@@ -170,19 +170,19 @@ struct ProjectsPage: View {
                         }
                     }
                 } label: {
-                    Text("绑定")
+                    Text(L("绑定"))
                 }
                 .buttonStyle(TintCapsuleStyle())
-                .help("选择版本后会先确认，再写入当前项目。")
+                .help(L("选择版本后会先确认，再写入当前项目。"))
             }
         }
     }
 
     private func pinSummary(_ kind: RuntimeKind) -> String {
-        guard model.projectDirectory != nil else { return "先选择项目" }
-        guard let pin = model.pins[kind] else { return "这个项目没有绑定" }
-        let mode = pin.writable ? "" : "，只读"
-        return "\(pin.fileName) · \(pin.version)\(mode)"
+        guard model.projectDirectory != nil else { return L("先选择项目") }
+        guard let pin = model.pins[kind] else { return L("这个项目没有绑定") }
+        let mode = pin.writable ? "" : L("，只读")
+        return L("%@ · %@%@", pin.fileName, pin.version, mode)
     }
 }
 
@@ -193,19 +193,31 @@ struct SettingsPage: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 PageHeader(
-                    title: "设置",
-                    subtitle: "镜像只影响这里发起的安装，不会改你的 shell 配置。"
+                    title: L("设置"),
+                    subtitle: L("镜像只影响这里发起的安装，不会改你的 shell 配置。")
                 )
 
                 WorkspacePanel {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("命令行")
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(L("语言"))
                             .font(.system(size: 13, weight: .semibold))
-                        Text("nvmd install、list、use、current、uninstall、which。use --project 把版本写进当前目录的 .nvmrc。")
+                        Text(L("默认和这台 Mac 的语言一致。也可以固定为中文或英文。"))
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text("命令在 ~/.local/bin/nvmd。终端改完后，版本页和项目页要点「刷新」才会更新显示。")
+                        LanguageSegment()
+                    }
+                }
+
+                WorkspacePanel {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(L("命令行"))
+                            .font(.system(size: 13, weight: .semibold))
+                        Text(L("nvmd install、list、use、current、uninstall、which。use --project 把版本写进当前目录的 .nvmrc。"))
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(L("命令在 ~/.local/bin/nvmd。终端改完后，版本页和项目页要点「刷新」才会更新显示。"))
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                             .textSelection(.enabled)
@@ -215,7 +227,7 @@ struct SettingsPage: View {
 
                 WorkspacePanel {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text("镜像源")
+                        Text(L("镜像源"))
                             .font(.system(size: 13, weight: .semibold))
                         ForEach(RuntimeKind.allCases) { kind in
                             VStack(alignment: .leading, spacing: 8) {
@@ -230,7 +242,7 @@ struct SettingsPage: View {
                                 .labelsHidden()
                             }
                         }
-                        Text("Node 国内源是 npmmirror，Python 是清华源或 npmmirror，Go 是 golang.google.cn，Java 是清华 Adoptium，Rust 是中科大。Volta 不使用这个镜像。")
+                        Text(L("Node 国内源是 npmmirror，Python 是清华源或 npmmirror，Go 是 golang.google.cn，Java 是清华 Adoptium，Rust 是中科大。Volta 不使用这个镜像。"))
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -239,14 +251,14 @@ struct SettingsPage: View {
 
                 WorkspacePanel {
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("别名")
+                        Text(L("别名"))
                             .font(.system(size: 13, weight: .semibold))
-                        Text("给版本起一个名字，脚本和目录切换都能用。default 仍然表示全局默认。")
+                        Text(L("给版本起一个名字，脚本和目录切换都能用。default 仍然表示全局默认。"))
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                         HStack(spacing: 8) {
                             ForEach(RuntimeKind.allCases) { kind in
-                                Button("\(kind.title) 别名") {
+                                Button(L("%@ 别名", kind.title)) {
                                     model.selectedKind = kind
                                     model.showAliases = true
                                 }
@@ -272,12 +284,12 @@ struct SettingsPage: View {
     private func mirrorLabel(_ choice: MirrorChoice, kind: RuntimeKind) -> String {
         switch (kind, choice) {
         case (.node, .china): "npmmirror"
-        case (.python, .china): "清华 / npmmirror"
+        case (.python, .china): L("清华 / npmmirror")
         case (.go, .china): "golang.google.cn"
-        case (.java, .china): "清华"
-        case (.rust, .china): "中科大"
-        case (_, .official): "官方"
-        case (_, .china): "国内"
+        case (.java, .china): L("清华")
+        case (.rust, .china): L("中科大")
+        case (_, .official): L("官方")
+        case (_, .china): L("国内")
         }
     }
 }
