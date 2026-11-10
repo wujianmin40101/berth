@@ -2,7 +2,8 @@ import Testing
 @testable import MacBJ
 
 struct NvmdTests {
-    @Test func `commands parse the nvmd verbs`() {
+    @Test("commands parse the nvmd verbs")
+    func commandsParseTheNvmdVerbs() {
         #expect(NvmdArguments.parse(["list"]) == .command(.list))
         #expect(NvmdArguments.parse(["nvmd", "current"]) == .command(.current))
         #expect(NvmdArguments.parse(["install", "v22.23.4"]) == .command(.install("v22.23.4")))
@@ -14,7 +15,8 @@ struct NvmdTests {
         #expect(NvmdArguments.parse(["which", "npm"]) == .command(.which("npm")))
     }
 
-    @Test func `unknown commands and extra arguments fail`() {
+    @Test("unknown commands and extra arguments fail")
+    func unknownCommandsAndExtraArgumentsFail() {
         #expect(NvmdArguments.parse(["deploy"]) == .rejected(L("没有这个命令: %@", "deploy")))
         #expect(NvmdArguments.parse(["list", "all"]) == .rejected(L("list 不接受参数。")))
         #expect(NvmdArguments.parse(["use"]) == .rejected(L("用法: nvmd use <版本> [--project]")))
