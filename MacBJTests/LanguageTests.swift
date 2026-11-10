@@ -3,14 +3,16 @@ import Testing
 @testable import MacBJ
 
 struct LanguageTests {
-    @Test func `english copy names the product and the language control`() {
+    @Test("english copy names the product and the language control")
+    func englishCopyNamesTheProductAndTheLanguageControl() {
         #expect(EnglishCopy.table["泊位"] == "Berth")
         #expect(EnglishCopy.table["语言"] == "Language")
         #expect(EnglishCopy.table["跟随系统"] == "System")
         #expect(EnglishCopy.table["端口"] == "Ports")
     }
 
-    @Test func `an unset preference follows the mac language`() {
+    @Test("an unset preference follows the mac language")
+    func anUnsetPreferenceFollowsTheMacLanguage() {
         let previous = UserDefaults.standard.string(forKey: LanguagePreference.key)
         UserDefaults.standard.removeObject(forKey: LanguagePreference.key)
         defer {

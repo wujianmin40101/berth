@@ -3,7 +3,8 @@ import Testing
 @testable import MacBJ
 
 struct OfficialRuntimeTests {
-    @Test func `go index keeps stable darwin builds and marks the two newest minors`() throws {
+    @Test("go index keeps stable darwin builds and marks the two newest minors")
+    func goIndexKeepsStableDarwinBuildsAndMarksTheTwoNewestMinors() throws {
         let data = try #require(goIndexJSON.data(using: .utf8))
         let releases = try #require(GoIndex.parse(data, arch: "arm64", mirror: .official))
         let channels = Dictionary(uniqueKeysWithValues: releases.map { ($0.version, $0.channel) })
@@ -19,7 +20,8 @@ struct OfficialRuntimeTests {
         #expect(GoIndex.url(version: "1.27.1", arch: "arm64", mirror: .china) == "https://golang.google.cn/dl/go1.27.1.darwin-arm64.tar.gz")
     }
 
-    @Test func `java marks lts, the newest feature, and older features`() throws {
+    @Test("java marks lts, the newest feature, and older features")
+    func javaMarksLtsTheNewestFeatureAndOlderFeatures() throws {
         let lts: Set<Int> = [8, 11, 17, 21, 25]
         #expect(JavaIndex.channel(feature: 25, lts: lts, newestFeature: 27) == .lts)
         #expect(JavaIndex.channel(feature: 27, lts: lts, newestFeature: 27) == .stable)
@@ -50,7 +52,8 @@ struct OfficialRuntimeTests {
         #expect(mirrored.sha256 == "c2619cb73ff1d296edd0644d92ae8ed94039bc1bdd43282398835b7f88134fb6")
     }
 
-    @Test func `rust index keeps numbered releases and marks only the newest as stable`() throws {
+    @Test("rust index keeps numbered releases and marks only the newest as stable")
+    func rustIndexKeepsNumberedReleasesAndMarksOnlyTheNewestAsStable() throws {
         let data = try #require(rustReleasesJSON.data(using: .utf8))
         let releases = try #require(RustIndex.parse(data, mirror: .official, target: "aarch64-apple-darwin"))
         let channels = Dictionary(uniqueKeysWithValues: releases.map { ($0.version, $0.channel) })
@@ -63,7 +66,8 @@ struct OfficialRuntimeTests {
         #expect(RustIndex.url(version: "1.99.1", target: "aarch64-apple-darwin", mirror: .china) == "https://mirrors.ustc.edu.cn/rust-static/dist/rust-1.99.1-aarch64-apple-darwin.tar.gz")
     }
 
-    @Test func `install scripts pin the official archive and reject shell injection`() {
+    @Test("install scripts pin the official archive and reject shell injection")
+    func installScriptsPinTheOfficialArchiveAndRejectShellInjection() {
         let sha = String(repeating: "a", count: 64)
         let go = OfficialRelease(
             version: "1.27.1",
@@ -120,7 +124,8 @@ struct OfficialRuntimeTests {
         #expect(OfficialScripts.uninstall(kind: .rust, version: "system") == nil)
     }
 
-    @Test func `catalog cache keeps only allowlisted archives`() throws {
+    @Test("catalog cache keeps only allowlisted archives")
+    func catalogCacheKeepsOnlyAllowlistedArchives() throws {
         let sha = String(repeating: "b", count: 64)
         let text = """
         1.27.1\t\(sha)\thttps://go.dev/dl/go1.27.1.darwin-arm64.tar.gz
@@ -141,7 +146,8 @@ struct OfficialRuntimeTests {
         #expect(OfficialCache.release(kind: .go, version: "1.26.1", home: home) == nil)
     }
 
-    @Test func `installed official versions keep the recorded global and a system row`() {
+    @Test("installed official versions keep the recorded global and a system row")
+    func installedOfficialVersionsKeepTheRecordedGlobalAndASystemRow() {
         let versions = OfficialListing.versions(from: """
         __BACKEND__ official
         __GLOBAL__
@@ -157,7 +163,8 @@ struct OfficialRuntimeTests {
         #expect(versions.contains { $0.name == "system" && !$0.isCurrent })
     }
 
-    @Test func `project pins write one official version file`() throws {
+    @Test("project pins write one official version file")
+    func projectPinsWriteOneOfficialVersionFile() throws {
         let root = FileManager.default.temporaryDirectory.appending(path: "macbj-pin-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -174,7 +181,8 @@ struct OfficialRuntimeTests {
         #expect(VersionOrder.isNewer("1.27.1", than: "1.26.10"))
     }
 
-    @Test func `shell hook learns go java and rust without dropping node or python`() {
+    @Test("shell hook learns go java and rust without dropping node or python")
+    func shellHookLearnsGoJavaAndRustWithoutDroppingNodeOrPython() {
         let script = ShellHook.script
         #expect(script.contains(".go-version"))
         #expect(script.contains(".java-version"))
