@@ -160,4 +160,23 @@ struct MaintenanceTests {
         #expect(parsed["com.example.old"] == false)
         #expect(parsed["com.example.new"] == true)
     }
+
+    @Test("system executables and Berth cannot be stopped")
+    func systemExecutablesAndBerthCannotBeStopped() {
+        let other: Int32 = ProcessInfo.processInfo.processIdentifier == 42 ? 43 : 42
+        #expect(!ProcessGuard.isSystemLocation("/usr/local/bin/node"))
+        #expect(!ProcessGuard.isSystemLocation("/opt/homebrew/bin/node"))
+        #expect(ProcessGuard.isSystemLocation("/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer"))
+        #expect(ProcessGuard.isSystemLocation("/System/Library/CoreServices/ControlCenter.app/Contents/MacOS/ControlCenter"))
+        #expect(ProcessGuard.isSystemLocation("/usr/libexec/syspolicyd"))
+        #expect(ProcessGuard.isSystemLocation("/usr/bin/ssh"))
+        #expect(ProcessGuard.isSystemLocation("/usr/sbin/syslogd"))
+        #expect(ProcessGuard.canStop(pid: other, path: "/usr/local/bin/node"))
+        #expect(ProcessGuard.canStop(pid: other, path: "/opt/homebrew/bin/python3"))
+        #expect(!ProcessGuard.canStop(pid: other, path: "/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer"))
+        #expect(!ProcessGuard.canStop(pid: other, path: "/System/Library/CoreServices/ControlCenter.app/Contents/MacOS/ControlCenter"))
+        #expect(!ProcessGuard.canStop(pid: other, path: "/usr/libexec/syspolicyd"))
+        #expect(!ProcessGuard.canStop(pid: 1, path: "/usr/local/bin/node"))
+        #expect(!ProcessGuard.canStop(pid: other, path: "/Applications/泊位.app/Contents/MacOS/MacBJ"))
+    }
 }

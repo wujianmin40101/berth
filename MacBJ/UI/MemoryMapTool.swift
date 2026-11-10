@@ -149,10 +149,9 @@ struct MemoryMapTool: View {
 
     private func canQuit(_ app: MemoryApp) -> Bool {
         if app.name == "MacBJ" || app.name == "泊位" || app.path.contains("泊位.app") { return false }
-        if SpeedTune.protected.contains(app.name) { return false }
-        let selfPid = ProcessInfo.processInfo.processIdentifier
+        if ProcessGuard.isSystemLocation(app.path) { return false }
         let pids = app.pids.isEmpty ? [app.pid] : app.pids
-        return pids.contains { $0 > 1 && $0 != selfPid }
+        return pids.contains { ProcessGuard.canStop(pid: $0) }
     }
 
     private func color(_ id: String) -> Color {

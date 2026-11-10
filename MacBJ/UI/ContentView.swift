@@ -43,7 +43,8 @@ struct ContentView: View {
         .preferredColorScheme(theme)
         .toolbar {
             ToolbarItem(placement: .navigation) {
-                WorkspaceBreadcrumb(page: page)
+                WorkspaceBreadcrumb(page: page, palette: palette)
+                    .environment(\.colorScheme, resolved)
             }
         }
         .frame(minWidth: 960, minHeight: 640)
