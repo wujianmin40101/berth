@@ -25,7 +25,7 @@ struct ProjectsPage: View {
                         if model.projects.isEmpty {
                             Text(L("还没有项目。新增一个目录后，可以分别绑定 Node、Python、Go、Java 和 Rust。"))
                                 .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
+                                .textSecondaryStyle()
                                 .fixedSize(horizontal: false, vertical: true)
                         } else {
                             ForEach(model.projects) { record in
@@ -50,11 +50,11 @@ struct ProjectsPage: View {
                         }
                         Text(L("Node 写入 .nvmrc，Python 写入 .python-version，Go、Java、Rust 分别写入 .go-version、.java-version、.rust-version。pyproject.toml 里的版本要求只读。"))
                             .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
+                            .textSecondaryStyle()
                         if let notice = model.projectNotice {
                             Text(notice)
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(palette.accent)
+                                .foregroundStyle(palette.accentInk)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         ForEach(RuntimeKind.allCases) { kind in
@@ -72,7 +72,7 @@ struct ProjectsPage: View {
                             .font(.system(size: 13, weight: .semibold))
                         Text(hookDetail)
                             .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .textSecondaryStyle()
                             .fixedSize(horizontal: false, vertical: true)
                         Button(model.hookStatus.title) { model.showHook = true }
                             .buttonStyle(TintCapsuleStyle())
@@ -101,10 +101,10 @@ struct ProjectsPage: View {
         return HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(kind.title)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                 Text(pinSummary(kind))
                     .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                    .textSecondaryStyle()
             }
             Spacer()
             bindControl(kind, installed: installed)
@@ -118,29 +118,29 @@ struct ProjectsPage: View {
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 6) {
                     Text(record.name)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(selected ? palette.accent : Color.primary)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(selected ? palette.accentInk : palette.ink)
                     if selected {
                         Image(systemName: "checkmark")
                             .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(palette.accent)
+                            .foregroundStyle(palette.accentInk)
                     }
                 }
                 Text(record.path)
                     .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                    .textSecondaryStyle()
                     .lineLimit(1)
                     .truncationMode(.middle)
                 Text(model.projectSummaries[record.path] ?? L("还没有绑定"))
                     .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                    .textSecondaryStyle()
                     .lineLimit(2)
             }
             Spacer(minLength: 8)
             Button(L("移除")) { model.removingProject = record }
                 .buttonStyle(PlainPressStyle())
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .textSecondaryStyle()
         }
         .padding(.vertical, 8)
         .padding(.horizontal, 8)
@@ -203,7 +203,7 @@ struct SettingsPage: View {
                             .font(.system(size: 13, weight: .semibold))
                         Text(L("默认和这台 Mac 的语言一致。也可以固定为中文或英文。"))
                             .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .textSecondaryStyle()
                             .fixedSize(horizontal: false, vertical: true)
                         LanguageSegment()
                     }
@@ -215,11 +215,11 @@ struct SettingsPage: View {
                             .font(.system(size: 13, weight: .semibold))
                         Text(L("nvmd install、list、use、current、uninstall、which。use --project 把版本写进当前目录的 .nvmrc。"))
                             .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .textSecondaryStyle()
                             .fixedSize(horizontal: false, vertical: true)
                         Text(L("命令在 ~/.local/bin/nvmd。终端改完后，版本页和项目页要点「刷新」才会更新显示。"))
                             .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
+                            .textSecondaryStyle()
                             .textSelection(.enabled)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -244,7 +244,7 @@ struct SettingsPage: View {
                         }
                         Text(L("Node 国内源是 npmmirror，Python 是清华源或 npmmirror，Go 是 golang.google.cn，Java 是清华 Adoptium，Rust 是中科大。Volta 不使用这个镜像。"))
                             .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
+                            .textSecondaryStyle()
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -255,7 +255,7 @@ struct SettingsPage: View {
                             .font(.system(size: 13, weight: .semibold))
                         Text(L("给版本起一个名字，脚本和目录切换都能用。default 仍然表示全局默认。"))
                             .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
+                            .textSecondaryStyle()
                         HStack(spacing: 8) {
                             ForEach(RuntimeKind.allCases) { kind in
                                 Button(L("%@ 别名", kind.title)) {

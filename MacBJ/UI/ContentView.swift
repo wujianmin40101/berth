@@ -176,9 +176,7 @@ struct ContentView: View {
 
     /// 往下点，新页面从右侧进来；往上点则反过来。减弱动态效果时只做淡入淡出。
     private var pageAnimation: Animation {
-        reduceMotion
-            ? .timingCurve(0.23, 1, 0.32, 1, duration: 0.2)
-            : .timingCurve(0.23, 1, 0.32, 1, duration: 0.3)
+        reduceMotion ? Motion.reduced : Motion.pageIn
     }
 
     private func navIndex(_ item: WorkspacePage) -> Int {
@@ -218,12 +216,12 @@ private struct WorkspaceStage: View {
             active: PageSlide(opacity: 0, x: forward ? travel : -travel),
             identity: PageSlide(opacity: 1, x: 0)
         )
-        .animation(.timingCurve(0.25, 0.1, 0.35, 1, duration: reduceMotion ? 0.2 : 0.3))
+        .animation(reduceMotion ? Motion.reduced : Motion.pageIn)
         let removal = AnyTransition.modifier(
             active: PageSlide(opacity: 0, x: forward ? -travel : travel),
             identity: PageSlide(opacity: 1, x: 0)
         )
-        .animation(.timingCurve(0, 0, 0.58, 1, duration: reduceMotion ? 0.2 : 0.15))
+        .animation(reduceMotion ? Motion.reduced : Motion.pageOut)
         return .asymmetric(insertion: insertion, removal: removal)
     }
 
@@ -240,7 +238,7 @@ private struct WorkspaceStage: View {
             ToolboxToolScreen(plugin: plugin, model: toolbox, projectDirectory: model.projectDirectory)
                 .padding(.horizontal, 28)
                 .padding(.top, 8)
-                .padding(.bottom, 20)
+                .padding(.bottom, 28)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         case .settings:
             SettingsPage(model: model)

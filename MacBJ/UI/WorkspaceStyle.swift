@@ -42,36 +42,70 @@ enum WorkspacePage: Hashable, Identifiable {
 struct WorkspacePalette {
     var scheme: ColorScheme
 
+    /// #F8F7FB / #17171C. Window and sidebar ground.
     var canvas: Color {
         scheme == .dark
-            ? Color(red: 0.09, green: 0.09, blue: 0.11)
-            : Color(red: 0.973, green: 0.969, blue: 0.984)
+            ? Color(red: 23.0 / 255, green: 23.0 / 255, blue: 28.0 / 255)
+            : Color(red: 248.0 / 255, green: 247.0 / 255, blue: 251.0 / 255)
     }
 
+    /// #FFFFFF / #242429. Panels, tables, theme button ground.
     var surface: Color {
-        scheme == .dark ? Color(red: 0.14, green: 0.14, blue: 0.16) : .white
-    }
-
-    var ink: Color {
-        scheme == .dark ? .white : Color(red: 0.09, green: 0.09, blue: 0.12)
-    }
-
-    var accent: Color { Color(red: 0.455, green: 0.345, blue: 0.965) }
-
-    var accentSoft: Color { accent.opacity(scheme == .dark ? 0.32 : 0.14) }
-
-    var card: Color {
         scheme == .dark
-            ? Color(red: 0.18, green: 0.15, blue: 0.28)
-            : Color(red: 0.941, green: 0.922, blue: 0.992)
+            ? Color(red: 36.0 / 255, green: 36.0 / 255, blue: 41.0 / 255)
+            : .white
     }
 
+    /// #17171F / #FFFFFF. Titles, body, default icons.
+    var ink: Color {
+        scheme == .dark ? .white : Color(red: 23.0 / 255, green: 23.0 / 255, blue: 31.0 / 255)
+    }
+
+    /// #5F6368 / #A2A2A4. Subtitles, descriptions, empty states.
+    var textSecondary: Color {
+        scheme == .dark
+            ? Color(red: 162.0 / 255, green: 162.0 / 255, blue: 164.0 / 255)
+            : Color(red: 95.0 / 255, green: 99.0 / 255, blue: 104.0 / 255)
+    }
+
+    /// #7458F6. Fills only. Not for body or link text.
+    var accentFill: Color { Color(red: 116.0 / 255, green: 88.0 / 255, blue: 246.0 / 255) }
+
+    /// #6246F0 / #8B78F8. Selected text, links, badge and capsule labels.
+    var accentInk: Color {
+        scheme == .dark
+            ? Color(red: 139.0 / 255, green: 120.0 / 255, blue: 248.0 / 255)
+            : Color(red: 98.0 / 255, green: 70.0 / 255, blue: 240.0 / 255)
+    }
+
+    /// accentFill at 14% composited on the current background, in both schemes.
+    var accentSoft: Color { accentFill.opacity(0.14) }
+
+    /// Black 4.5% / white 6%. Fields, menu buttons, table header.
     var field: Color {
         scheme == .dark ? Color.white.opacity(0.06) : Color.black.opacity(0.045)
     }
 
+    /// Black 6% / white 8%. Strokes and dividers.
     var line: Color {
         scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06)
+    }
+
+    /// Black 6% / white 8%. Sidebar row hover.
+    var hoverFill: Color {
+        scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06)
+    }
+
+    /// #CED3D6 / #3B454A. Disk treemap tracks only.
+    var chartTrack: Color {
+        scheme == .dark
+            ? Color(red: 59.0 / 255, green: 69.0 / 255, blue: 74.0 / 255)
+            : Color(red: 206.0 / 255, green: 211.0 / 255, blue: 214.0 / 255)
+    }
+
+    /// #21292C, or ink in dark. Treemap labels only.
+    var chartInk: Color {
+        scheme == .dark ? ink : Color(red: 33.0 / 255, green: 41.0 / 255, blue: 44.0 / 255)
     }
 }
 
@@ -113,7 +147,7 @@ struct WorkspaceBreadcrumb: View {
             Text("/")
                 .foregroundStyle(.tertiary)
             Text(page.title)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(palette.textSecondary)
             Spacer()
         }
         .font(.system(size: 13, weight: .medium))
@@ -181,11 +215,8 @@ struct WorkspaceRail: View {
     private var labelProgress: CGFloat { RailMetrics.labelProgress(width) }
     /// 只有收到最窄、名称已经藏起来时，才在右侧补提示。
     private var hintsOnHover: Bool { width <= RailMetrics.collapsed + 0.5 }
-    private var hintEnter: Animation { .timingCurve(0.16, 1, 0.3, 1, duration: 0.24) }
-    private var hintExit: Animation { .timingCurve(0.22, 1, 0.36, 1, duration: 0.12) }
-    private var hoverFill: Color {
-        palette.scheme == .dark ? Color.white.opacity(0.08) : Color.black.opacity(0.06)
-    }
+    private var hintEnter: Animation { Motion.enter }
+    private var hintExit: Animation { Motion.exit }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -220,12 +251,11 @@ struct WorkspaceRail: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             HStack(spacing: labelProgress == 0 ? 0 : 8) {
                 ThemeSwitchButton(isDark: isDark, host: host, action: toggleTheme)
-                    .frame(width: RailMetrics.icon, height: RailMetrics.icon)
                 if labelProgress > 0 {
                     Button(action: toggleTheme) {
                         Text(isDark ? L("深色模式") : L("浅色模式"))
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(palette.textSecondary)
                             .lineLimit(1)
                             .opacity(labelProgress)
                             .offset(x: (1 - labelProgress) * -8)
@@ -278,7 +308,8 @@ struct WorkspaceRail: View {
                     .symbolRenderingMode(.monochrome)
                     .frame(width: RailMetrics.icon, height: RailMetrics.icon)
                     .background(selected ? palette.accentSoft : Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .foregroundStyle(selected ? palette.accent : Color.secondary)
+                    .foregroundStyle(selected ? palette.accentInk : palette.textSecondary)
+                    .animation(reduceMotion ? nil : Motion.color, value: selected)
             }
             .contentShape(Rectangle())
         }
@@ -319,8 +350,7 @@ struct WorkspaceRail: View {
             .fixedSize()
             .offset(x: width + RailMetrics.handle + 6 - 18)
             .opacity(visible ? 1 : 0)
-            .scaleEffect(reduce ? 1 : (visible ? 1 : 0.96))
-            .offset(y: reduce ? 0 : (visible ? 0 : 4))
+            .offset(y: reduce || visible ? 0 : 8)
             .animation(reduce ? nil : (visible ? hintEnter : hintExit), value: visible)
             .allowsHitTesting(false)
             .accessibilityHidden(true)
@@ -338,7 +368,8 @@ struct WorkspaceRail: View {
             if labelProgress > 0 {
                 Text(title)
                     .font(.system(size: prominent ? 18 : 13, weight: prominent || selected ? .semibold : .medium))
-                    .foregroundStyle(prominent ? palette.ink : (selected ? palette.accent : Color.secondary))
+                    .foregroundStyle(prominent ? palette.ink : (selected ? palette.accentInk : palette.textSecondary))
+                    .animation(reduceMotion ? nil : Motion.color, value: selected)
                     .lineLimit(1)
                     .opacity(labelProgress)
                     .offset(x: (1 - labelProgress) * -8)
@@ -347,6 +378,7 @@ struct WorkspaceRail: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, RailMetrics.side)
+        .frame(minHeight: 44)
         .frame(width: width, alignment: .leading)
         .background { hoverPlate(hovered) }
         .contentShape(Rectangle())
@@ -355,9 +387,10 @@ struct WorkspaceRail: View {
     /// 深色底比导航栏窄一圈，左右留出空隙；整行仍然是触摸范围。
     private func hoverPlate(_ visible: Bool) -> some View {
         RoundedRectangle(cornerRadius: 12, style: .continuous)
-            .fill(hoverFill)
+            .fill(palette.hoverFill)
             .padding(.horizontal, 8)
             .opacity(visible ? 1 : 0)
+            .animation(reduceMotion ? nil : Motion.color, value: visible)
     }
 }
 
@@ -394,11 +427,7 @@ private struct RailHoverChip: View {
         .shadow(color: .black.opacity(palette.scheme == .dark ? 0.28 : 0.08), radius: 2, y: 1)
     }
 
-    private var chipFill: Color {
-        palette.scheme == .dark
-            ? Color(red: 0.23, green: 0.23, blue: 0.25)
-            : Color(red: 0.925, green: 0.925, blue: 0.937)
-    }
+    private var chipFill: Color { palette.surface }
 }
 
 struct WorkspaceRailColumn: View {
@@ -432,14 +461,12 @@ struct WorkspaceRailColumn: View {
 struct RailResizeHandle: View {
     @Binding var width: CGFloat
     @Environment(\.palette) private var palette
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var dragging = false
     @State private var hovered = false
     @State private var dragStart: CGFloat = RailMetrics.collapsed
     @FocusState private var focused: Bool
 
     private var active: Bool { dragging || hovered || focused }
-    private var spring: Animation { .timingCurve(0.16, 1, 0.3, 1, duration: 0.4) }
 
     var body: some View {
         ZStack {
@@ -506,11 +533,7 @@ struct RailResizeHandle: View {
 
     private func settle(_ proposed: CGFloat) {
         let target = RailMetrics.clamped(proposed)
-        if reduceMotion || abs(width - target) < 0.5 {
-            width = target
-        } else {
-            withAnimation(spring) { width = target }
-        }
+        width = target
         RailMetrics.save(target)
     }
 }
@@ -534,7 +557,7 @@ private struct HandleChrome: View {
                 }
             }
         }
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.16), value: active)
+        .animation(reduceMotion ? nil : Motion.color, value: active)
     }
 
     private var line: Color {
@@ -558,6 +581,7 @@ struct PageHeader: View {
     var actionIcon: String? = nil
     var actionDisabled: Bool = false
     var action: (() -> Void)? = nil
+    @Environment(\.palette) private var palette
     @Environment(\.presentFeatureHelp) private var presentFeatureHelp
 
     var body: some View {
@@ -572,8 +596,8 @@ struct PageHeader: View {
                         } label: {
                             Image(systemName: "questionmark.circle")
                                 .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(.secondary)
-                                .frame(width: 28, height: 28)
+                                .foregroundStyle(palette.textSecondary)
+                                .frame(width: 44, height: 44)
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(PlainPressStyle(iconOnly: true))
@@ -582,7 +606,7 @@ struct PageHeader: View {
                 }
                 Text(subtitle)
                     .font(.system(size: 15))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(palette.textSecondary)
             }
             Spacer(minLength: 16)
             if let actionTitle, let action {
@@ -614,63 +638,115 @@ struct WorkspacePanel<Content: View>: View {
 }
 
 struct TintCapsuleStyle: ButtonStyle {
-    @Environment(\.palette) private var palette
-
     func makeBody(configuration: Configuration) -> some View {
+        TintCapsuleBody(configuration: configuration)
+    }
+}
+
+private struct TintCapsuleBody: View {
+    var configuration: ButtonStyleConfiguration
+    @Environment(\.palette) private var palette
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var hovered = false
+
+    var body: some View {
         configuration.label
             .font(.system(size: 13, weight: .semibold))
+            .foregroundStyle(isEnabled ? palette.accentInk : palette.textSecondary)
             .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .background(palette.accentSoft, in: Capsule())
-            .foregroundStyle(palette.accent)
-            .pressFeedback(pressed: configuration.isPressed, primary: true)
+            .frame(minHeight: 44)
+            .background {
+                Capsule().fill(isEnabled ? palette.accentSoft : palette.field)
+                if isEnabled && hovered {
+                    Capsule().fill(palette.ink.opacity(0.04))
+                }
+            }
+            .contentShape(Capsule())
+            .pressFeedback(pressed: configuration.isPressed, enabled: isEnabled)
+            .onHover { hovered = $0 }
+            .animation(reduceMotion ? nil : Motion.color, value: hovered)
+            .animation(reduceMotion ? nil : Motion.color, value: isEnabled)
     }
 }
 
 struct FieldMenuStyle: ButtonStyle {
-    @Environment(\.palette) private var palette
-
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 13, weight: .medium))
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(palette.field, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .foregroundStyle(.primary)
-            .pressFeedback(pressed: configuration.isPressed)
+        FieldMenuBody(configuration: configuration)
     }
 }
 
-/// 无边框按钮的按压。普通按钮缩到 0.97，纯图标缩到 0.96。
+private struct FieldMenuBody: View {
+    var configuration: ButtonStyleConfiguration
+    @Environment(\.palette) private var palette
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
+        configuration.label
+            .font(.system(size: 13, weight: .medium))
+            .foregroundStyle(isEnabled ? palette.ink : palette.textSecondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(palette.field, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
+            .pressFeedback(pressed: configuration.isPressed, enabled: isEnabled)
+    }
+}
+
+/// 无边框按钮的按压。带字按钮缩到 0.97，纯图标缩到 0.96。
 struct PlainPressStyle: ButtonStyle {
     var iconOnly = false
 
     func makeBody(configuration: Configuration) -> some View {
+        PlainPressBody(configuration: configuration, iconOnly: iconOnly)
+    }
+}
+
+private struct PlainPressBody: View {
+    var configuration: ButtonStyleConfiguration
+    var iconOnly: Bool
+    @Environment(\.isEnabled) private var isEnabled
+
+    var body: some View {
         configuration.label
-            .pressFeedback(pressed: configuration.isPressed, iconOnly: iconOnly)
+            .pressFeedback(pressed: configuration.isPressed, iconOnly: iconOnly, enabled: isEnabled)
     }
 }
 
 struct PressFeedback: ViewModifier {
     var pressed: Bool
     var iconOnly = false
-    var primary = false
+    var enabled = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var scale: CGFloat {
+        guard enabled, !reduceMotion, pressed else { return 1 }
+        return iconOnly ? 0.96 : 0.97
+    }
 
     func body(content: Content) -> some View {
         content
-            .scaleEffect(reduceMotion || !pressed ? 1 : (iconOnly ? 0.96 : 0.97))
-            .animation(
-                reduceMotion ? nil : .timingCurve(0.18, 0.89, 0.32, 1.28, duration: 0.15),
-                value: pressed
-            )
-            .opacity(primary && pressed ? 0.84 : 1)
+            .scaleEffect(scale)
+            .animation(reduceMotion || !enabled ? nil : Motion.press, value: pressed)
     }
 }
 
 extension View {
-    func pressFeedback(pressed: Bool, iconOnly: Bool = false, primary: Bool = false) -> some View {
-        modifier(PressFeedback(pressed: pressed, iconOnly: iconOnly, primary: primary))
+    func pressFeedback(pressed: Bool, iconOnly: Bool = false, enabled: Bool = true) -> some View {
+        modifier(PressFeedback(pressed: pressed, iconOnly: iconOnly, enabled: enabled))
+    }
+
+    func textSecondaryStyle() -> some View {
+        modifier(TextSecondaryStyle())
+    }
+}
+
+private struct TextSecondaryStyle: ViewModifier {
+    @Environment(\.palette) private var palette
+
+    func body(content: Content) -> some View {
+        content.foregroundStyle(palette.textSecondary)
     }
 }
 

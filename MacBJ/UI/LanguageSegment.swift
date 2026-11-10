@@ -50,7 +50,7 @@ struct LanguageSegment: View {
         .background(palette.field, in: Capsule())
         .overlay {
             Capsule()
-                .stroke(focused ? palette.accent : Color.clear, lineWidth: 2)
+                .stroke(focused ? palette.accentInk : Color.clear, lineWidth: 2)
         }
         .fixedSize(horizontal: true, vertical: true)
         .focusable()
@@ -68,7 +68,7 @@ struct LanguageSegment: View {
     }
 
     private var pillAnimation: Animation? {
-        reduceMotion || !ready ? nil : .spring(duration: 0.42, bounce: 0.16)
+        reduceMotion || !ready ? nil : Motion.focus
     }
 
     private var edgeMask: some View {
@@ -92,7 +92,7 @@ struct LanguageSegment: View {
         } label: {
             Text(item.segmentTitle)
                 .font(.system(size: 13, weight: selected ? .semibold : .medium))
-                .foregroundStyle(selected ? palette.ink : palette.ink.opacity(0.55))
+                .foregroundStyle(selected ? palette.accentInk : palette.textSecondary)
                 .lineLimit(1)
                 .padding(.horizontal, 16)
                 .frame(height: 32)
@@ -143,10 +143,7 @@ private struct SegmentPressStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(reduceMotion || !configuration.isPressed ? 1 : 0.96)
-            .animation(
-                reduceMotion ? nil : .timingCurve(0.18, 0.89, 0.32, 1.28, duration: 0.15),
-                value: configuration.isPressed
-            )
+            .scaleEffect(reduceMotion || !configuration.isPressed ? 1 : 0.97)
+            .animation(reduceMotion ? nil : Motion.press, value: configuration.isPressed)
     }
 }

@@ -81,10 +81,9 @@ enum ToolboxSettings {
     static func enabledPlugins() -> Set<ToolboxPlugin> {
         let defaults = UserDefaults.standard
         guard var stored = defaults.array(forKey: enabledKey) as? [String] else {
-            return Set(ToolboxPlugin.allCases.filter(\.startsEnabled)).union([.machine])
+            return Set(ToolboxPlugin.allCases.filter(\.startsEnabled))
         }
-        let hadLegacy = stored.contains { legacyMaintenance.contains($0) }
-        if hadLegacy || !defaults.bool(forKey: maintenanceKey) {
+        if stored.contains(where: { legacyMaintenance.contains($0) }) {
             stored.removeAll { legacyMaintenance.contains($0) }
             if !stored.contains(ToolboxPlugin.machine.rawValue) {
                 stored.append(ToolboxPlugin.machine.rawValue)
