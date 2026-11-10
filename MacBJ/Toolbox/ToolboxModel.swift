@@ -54,7 +54,7 @@ final class ToolboxModel {
         _ = Self.terminateObserver
     }
 
-    private static let terminateObserver: NSObjectProtocol = NotificationCenter.default.addObserver(
+    nonisolated(unsafe) private static let terminateObserver: NSObjectProtocol = NotificationCenter.default.addObserver(
         forName: Notification.Name("NSApplicationWillTerminateNotification"),
         object: nil,
         queue: .main

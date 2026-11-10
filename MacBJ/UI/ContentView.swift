@@ -246,7 +246,7 @@ private struct WorkspaceStage: View {
     }
 }
 
-private struct PageSlide: ViewModifier, Animatable {
+private struct PageSlide: ViewModifier, @preconcurrency Animatable {
     var opacity: Double
     var x: CGFloat
 
