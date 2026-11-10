@@ -178,5 +178,12 @@ struct MaintenanceTests {
         #expect(!ProcessGuard.canStop(pid: other, path: "/usr/libexec/syspolicyd"))
         #expect(!ProcessGuard.canStop(pid: 1, path: "/usr/local/bin/node"))
         #expect(!ProcessGuard.canStop(pid: other, path: "/Applications/泊位.app/Contents/MacOS/MacBJ"))
+        let marvisPython = "/Users/mac/Library/Application Support/com.tencent.mac.marvis/components/MarvisAgent/Versions/1.0.0.10406/runtime/python311/bin/python3.11"
+        #expect(!ProcessGuard.isSystemLocation(marvisPython))
+        #expect(ProcessGuard.canStop(resolvedPath: nil))
+        #expect(ProcessGuard.canStop(resolvedPath: marvisPython))
+        #expect(ProcessGuard.canStop(pid: other, path: marvisPython, command: "python3.11"))
+        #expect(ProcessGuard.absoluteExecutable(in: marvisPython) == marvisPython)
+        #expect(ProcessGuard.absoluteExecutable(in: "python3.11") == nil)
     }
 }
