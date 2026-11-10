@@ -15,10 +15,10 @@ nonisolated enum ProcessGuard {
         return String(cString: buffer)
     }
 
-    /// 命令行的第一个词如果是绝对路径，就用它判断，避免只拿到短名字时误判。
+    /// 整段命令以 `/` 开头时保留空格。用户目录路径里常有空格，不能只取第一段。
     nonisolated static func absoluteExecutable(in command: String?) -> String? {
         guard let command else { return nil }
-        let token = command.split(whereSeparator: \.isWhitespace).first.map(String.init) ?? command
+        let token = command.trimmingCharacters(in: .whitespacesAndNewlines)
         guard token.hasPrefix("/") else { return nil }
         return token
     }
