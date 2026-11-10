@@ -705,7 +705,7 @@ nonisolated enum SpeedTune {
                 name: name,
                 cpu: cpu,
                 bytes: rss * 1024,
-                canStop: ProcessGuard.canStop(pid: pid, path: executable)
+                canStop: ProcessGuard.canStop(pid: pid, path: executable, command: name)
             ))
         }
         return rows.sorted { lhs, rhs in

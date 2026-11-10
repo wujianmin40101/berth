@@ -7,9 +7,20 @@ nonisolated enum ProcessGuard {
     nonisolated static func executablePath(pid: Int32) -> String? {
         guard pid > 0 else { return nil }
         var buffer = [CChar](repeating: 0, count: Int(MAXPATHLEN))
-        let length = proc_pidpath(pid, &buffer, UInt32(buffer.count))
+        let length = buffer.withUnsafeMutableBytes { raw -> Int32 in
+            guard let base = raw.baseAddress else { return -1 }
+            return proc_pidpath(pid, base, UInt32(raw.count))
+        }
         guard length > 0 else { return nil }
         return String(cString: buffer)
+    }
+
+    /// 命令行的第一个词如果是绝对路径，就用它判断，避免只拿到短名字时误判。
+    nonisolated static func absoluteExecutable(in command: String?) -> String? {
+        guard let command else { return nil }
+        let token = command.split(whereSeparator: \.isWhitespace).first.map(String.init) ?? command
+        guard token.hasPrefix("/") else { return nil }
+        return token
     }
 
     /// 可执行文件或应用包落在系统目录里。
@@ -28,13 +39,20 @@ nonisolated enum ProcessGuard {
         return path.contains("/泊位.app/") || path.contains("/MacBJ.app/")
     }
 
-    /// `path` 为 nil 时会再读一次进程路径。读不到路径时拒绝结束，避免误伤没有路径的系统进程。
-    nonisolated static func canStop(pid: Int32, path: String? = nil) -> Bool {
-        if pid <= 1 { return false }
-        let resolved = path ?? executablePath(pid: pid)
-        if isThisApp(pid: pid, path: resolved) { return false }
-        guard let resolved else { return false }
-        if isSystemLocation(resolved) { return false }
+    /// 读不到路径时允许结束。只有已经确认落在系统目录或泊位自己才拒绝。
+    nonisolated static func canStop(resolvedPath path: String?) -> Bool {
+        guard let path else { return true }
+        if isSystemLocation(path) { return false }
+        if path.contains("/泊位.app/") || path.contains("/MacBJ.app/") { return false }
         return true
+    }
+
+    /// 只有已经确认是泊位或系统目录里的可执行文件才拒绝结束。
+    /// 读不到路径时不拦截：用户目录里的进程常常只能从 lsof 的命令里看到路径。
+    nonisolated static func canStop(pid: Int32, path: String? = nil, command: String? = nil) -> Bool {
+        if pid <= 1 { return false }
+        let resolved = path ?? executablePath(pid: pid) ?? absoluteExecutable(in: command)
+        if isThisApp(pid: pid, path: resolved) { return false }
+        return canStop(resolvedPath: resolved)
     }
 }

@@ -53,7 +53,7 @@ enum PortListing {
         }
         return .success(parse(output.stdout).map { row in
             var copy = row
-            copy.canStop = ProcessGuard.canStop(pid: row.pid)
+            copy.canStop = ProcessGuard.canStop(pid: row.pid, command: row.command)
             return copy
         })
     }
@@ -97,7 +97,7 @@ enum ProcessListing {
         }
         return .success(parse(output.stdout).map { row in
             var copy = row
-            copy.canStop = ProcessGuard.canStop(pid: row.pid)
+            copy.canStop = ProcessGuard.canStop(pid: row.pid, command: row.command)
             return copy
         })
     }
