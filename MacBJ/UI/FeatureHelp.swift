@@ -98,7 +98,7 @@ enum FeatureHelp {
 }
 
 private struct FeatureHelpKey: EnvironmentKey {
-    static let defaultValue: ((String, String) -> Void)? = nil
+    nonisolated(unsafe) static let defaultValue: ((String, String) -> Void)? = nil
 }
 
 extension EnvironmentValues {

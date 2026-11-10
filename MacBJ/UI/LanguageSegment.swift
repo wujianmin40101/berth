@@ -132,7 +132,7 @@ private struct ScrollSample: Equatable {
 }
 
 private struct SegmentFrameKey: PreferenceKey {
-    static var defaultValue: [LanguageChoice: CGRect] = [:]
+    nonisolated(unsafe) static let defaultValue: [LanguageChoice: CGRect] = [:]
     static func reduce(value: inout [LanguageChoice: CGRect], nextValue: () -> [LanguageChoice: CGRect]) {
         value.merge(nextValue()) { _, new in new }
     }

@@ -85,7 +85,7 @@ struct RuntimeKindBar: View {
 }
 
 private struct RuntimeTabFrames: PreferenceKey {
-    static var defaultValue: [RuntimeKind: CGRect] = [:]
+    nonisolated(unsafe) static let defaultValue: [RuntimeKind: CGRect] = [:]
 
     static func reduce(
         value: inout [RuntimeKind: CGRect],
