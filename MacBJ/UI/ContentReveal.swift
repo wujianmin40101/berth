@@ -4,6 +4,9 @@ import SwiftUI
 struct DiagonalSweep: View {
     var active: Bool
     @State private var progress: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var playing: Bool { active && !reduceMotion }
 
     var body: some View {
         GeometryReader { geo in
@@ -21,20 +24,24 @@ struct DiagonalSweep: View {
                 x: -geo.size.width * 0.45 + progress * geo.size.width * 1.7,
                 y: -geo.size.height * 0.2 + progress * geo.size.height * 0.45
             )
+            .animation(playing ? Motion.sweep : nil, value: progress)
         }
         .allowsHitTesting(false)
-        .onAppear { play() }
-        .onChange(of: active) { _, _ in play() }
+        .onAppear { sync(playing) }
+        .onChange(of: playing) { _, next in sync(next) }
     }
 
-    private func play() {
-        guard active else {
+    private func sync(_ play: Bool) {
+        if play {
             progress = 0
-            return
-        }
-        progress = 0
-        withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
-            progress = 1
+            Task { @MainActor in
+                guard playing else { return }
+                progress = 1
+            }
+        } else {
+            var transaction = Transaction()
+            transaction.disablesAnimations = true
+            withTransaction(transaction) { progress = 0 }
         }
     }
 }

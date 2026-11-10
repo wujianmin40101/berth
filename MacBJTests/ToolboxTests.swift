@@ -88,6 +88,49 @@ struct ToolboxTests {
         #expect(enabled == [.ports, .processes, .services])
     }
 
+    @Test func `machine care stays off until it is enabled`() {
+        let defaults = UserDefaults.standard
+        let enabledKey = "macbj.toolbox.enabled"
+        let maintenanceKey = "macbj.toolbox.maintenance"
+        let previousEnabled = defaults.object(forKey: enabledKey)
+        let previousFlag = defaults.object(forKey: maintenanceKey)
+        defer {
+            if let previousEnabled {
+                defaults.set(previousEnabled, forKey: enabledKey)
+            } else {
+                defaults.removeObject(forKey: enabledKey)
+            }
+            if let previousFlag {
+                defaults.set(previousFlag, forKey: maintenanceKey)
+            } else {
+                defaults.removeObject(forKey: maintenanceKey)
+            }
+        }
+
+        defaults.removeObject(forKey: enabledKey)
+        defaults.removeObject(forKey: maintenanceKey)
+        let fresh = ToolboxSettings.enabledPlugins()
+        #expect(fresh == [.ports, .processes, .services])
+        #expect(!fresh.contains(.machine))
+
+        defaults.set(["ports", "machine"], forKey: enabledKey)
+        #expect(ToolboxSettings.enabledPlugins().contains(.machine))
+
+        defaults.set(["ports", "memory", "speed"], forKey: enabledKey)
+        let migrated = ToolboxSettings.enabledPlugins()
+        #expect(migrated.contains(.machine))
+        #expect(migrated.contains(.ports))
+        let stored = defaults.array(forKey: enabledKey) as? [String] ?? []
+        #expect(stored.contains("machine"))
+        #expect(!stored.contains("memory"))
+        #expect(!stored.contains("speed"))
+
+        defaults.set(["ports", "processes", "services"], forKey: enabledKey)
+        defaults.set(false, forKey: maintenanceKey)
+        let untouched = ToolboxSettings.enabledPlugins()
+        #expect(!untouched.contains(.machine))
+    }
+
     @Test func `port and process listings read the live system`() async {
         let ports = await PortListing.load()
         #expect((try? ports.get()) != nil)
