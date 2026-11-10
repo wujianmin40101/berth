@@ -151,7 +151,7 @@ private struct DiskMapChart: View {
     }
 }
 
-private struct SkeletonWave: ViewModifier {
+struct SkeletonWave: ViewModifier {
     var index: Int
     var active: Bool
     var reduceMotion: Bool
