@@ -78,8 +78,12 @@ struct WorkspacePalette {
             : Color(red: 98.0 / 255, green: 70.0 / 255, blue: 240.0 / 255)
     }
 
-    /// accentFill at 14% composited on the current background, in both schemes.
-    var accentSoft: Color { accentFill.opacity(0.14) }
+    /// Light: accentFill at 14% on the current background. Dark: solid #24203B.
+    var accentSoft: Color {
+        scheme == .dark
+            ? Color(red: 36.0 / 255, green: 32.0 / 255, blue: 59.0 / 255)
+            : accentFill.opacity(0.14)
+    }
 
     /// Black 4.5% / white 6%. Fields, menu buttons, table header.
     var field: Color {
