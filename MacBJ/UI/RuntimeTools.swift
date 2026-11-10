@@ -69,8 +69,14 @@ struct PortsTool: View {
                     .textSecondaryStyle()
             }
             Spacer()
-            Button(L("结束")) { pending = row }
-                .buttonStyle(FieldMenuStyle())
+            if row.canStop {
+                Button(L("结束")) { pending = row }
+                    .buttonStyle(FieldMenuStyle())
+            } else {
+                Text(L("不能结束这个进程。"))
+                    .font(.system(size: 12))
+                    .textSecondaryStyle()
+            }
         }
         .padding(.vertical, 8)
     }
@@ -95,6 +101,10 @@ struct PortsTool: View {
     private func signal(force: Bool) {
         guard let target = pending else { return }
         pending = nil
+        guard target.canStop else {
+            message = L("不能结束这个进程。")
+            return
+        }
         Task {
             message = await ProcessSignal.send(pid: target.pid, force: force) ?? L("已发送结束信号。")
             await reload()
@@ -148,8 +158,14 @@ struct ProcessesTool: View {
                                     .textSelection(.enabled)
                             }
                             Spacer()
-                            Button(L("结束")) { pending = row }
-                                .buttonStyle(FieldMenuStyle())
+                            if row.canStop {
+                                Button(L("结束")) { pending = row }
+                                    .buttonStyle(FieldMenuStyle())
+                            } else {
+                                Text(L("不能结束这个进程。"))
+                                    .font(.system(size: 12))
+                                    .textSecondaryStyle()
+                            }
                         }
                         .padding(.vertical, 8)
                         Rectangle().fill(Color.primary.opacity(0.06)).frame(height: 1)
@@ -189,6 +205,10 @@ struct ProcessesTool: View {
     private func signal(force: Bool) {
         guard let target = pending else { return }
         pending = nil
+        guard target.canStop else {
+            message = L("不能结束这个进程。")
+            return
+        }
         Task {
             message = await ProcessSignal.send(pid: target.pid, force: force) ?? L("已发送结束信号。")
             await reload()

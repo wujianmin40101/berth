@@ -1,5 +1,6 @@
 import Darwin
 import Foundation
+import Security
 
 enum HostsFile {
     static func read() -> Result<String, ToolError> {
@@ -54,24 +55,24 @@ enum HostsFile {
         } catch {
             return L("没有写好准备替换的文件。")
         }
-        let script = """
-        on run argv
-          do shell script "cp /etc/hosts /etc/hosts.macbj-bak && cp " & quoted form of (item 1 of argv) & " /etc/hosts" with administrator privileges
-        end run
-        """
         let path = proposed.path
+        let command = "cp /etc/hosts /etc/hosts.macbj-bak && cp \(ShellQuote.singleQuoted(path)) /etc/hosts"
         let detail: String? = await withCheckedContinuation { continuation in
             DispatchQueue.global(qos: .userInitiated).async {
-                let result = collect(executable: "/usr/bin/osascript", arguments: ["-e", script, "--", path])
-                if result.status < 0 {
-                    continuation.resume(returning: L("没有打开系统授权。"))
+                let outcome = PrivilegedShell.run(command)
+                if outcome.cancelled {
+                    continuation.resume(returning: L("已取消写入。"))
                     return
                 }
-                if result.status == 0 {
+                if outcome.status == 0 {
                     continuation.resume(returning: nil)
                     return
                 }
-                continuation.resume(returning: result.text.trimmingCharacters(in: .whitespacesAndNewlines))
+                if outcome.status == errAuthorizationInternal {
+                    continuation.resume(returning: L("没有打开系统授权。"))
+                    return
+                }
+                continuation.resume(returning: outcome.text.trimmingCharacters(in: .whitespacesAndNewlines))
             }
         }
         guard let detail else { return nil }

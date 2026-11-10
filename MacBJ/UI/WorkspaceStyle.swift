@@ -138,7 +138,7 @@ struct WindowDragArea: NSViewRepresentable {
 
 struct WorkspaceBreadcrumb: View {
     var page: WorkspacePage
-    @Environment(\.palette) private var palette
+    var palette: WorkspacePalette
 
     var body: some View {
         HStack(spacing: 8) {
@@ -148,8 +148,9 @@ struct WorkspaceBreadcrumb: View {
                 .frame(width: 18, height: 18)
                 .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
             Text(L("工作区"))
+                .foregroundStyle(palette.ink)
             Text("/")
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(palette.textSecondary)
             Text(page.title)
                 .foregroundStyle(palette.textSecondary)
             Spacer()

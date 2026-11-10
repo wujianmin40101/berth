@@ -66,8 +66,14 @@ struct SpeedTuneTool: View {
                                     .textSecondaryStyle()
                             }
                             Spacer()
-                            Button(L("结束")) { pending = hog }
-                                .buttonStyle(FieldMenuStyle())
+                            if hog.canStop {
+                                Button(L("结束")) { pending = hog }
+                                    .buttonStyle(FieldMenuStyle())
+                            } else {
+                                Text(L("不能结束这个进程。"))
+                                    .font(.system(size: 12))
+                                    .textSecondaryStyle()
+                            }
                         }
                         .padding(.vertical, 4)
                     }
@@ -139,6 +145,10 @@ struct SpeedTuneTool: View {
 
     private func quit(_ hog: SpeedHog) async {
         pending = nil
+        guard hog.canStop else {
+            message = L("不能结束这个进程。")
+            return
+        }
         do {
             try SpeedTune.quit(pid: hog.pid, name: hog.name)
             message = L("已结束「%@」。", hog.name)
