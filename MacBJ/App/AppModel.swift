@@ -80,22 +80,24 @@ final class AppModel {
         loading.insert(kind)
         failures[kind] = nil
         let mirror = mirrors[kind] ?? .official
-        tasks[kind] = Task {
-            let provider = provider(for: kind)
+        let model = UncheckedBox(value: self)
+        let task = Task {
+            let provider = model.value.provider(for: kind)
             let snapshot = await provider.catalog(mirror: mirror)
             let found = await provider.aliases(backend: snapshot.backend)
             guard !Task.isCancelled else { return }
-            snapshots[kind] = snapshot
-            catalogRevision[kind, default: 0] += 1
-            aliases[kind] = found
-            if let projectDirectory {
-                pins[kind] = provider.projectPin(in: projectDirectory)
+            model.value.snapshots[kind] = snapshot
+            model.value.catalogRevision[kind, default: 0] += 1
+            model.value.aliases[kind] = found
+            if let projectDirectory = model.value.projectDirectory {
+                model.value.pins[kind] = provider.projectPin(in: projectDirectory)
             }
-            loading.remove(kind)
-            if selection[kind] == nil, let current = snapshot.installed.first(where: \.isCurrent) {
-                selection[kind] = current.id
+            model.value.loading.remove(kind)
+            if model.value.selection[kind] == nil, let current = snapshot.installed.first(where: \.isCurrent) {
+                model.value.selection[kind] = current.id
             }
         }
+        tasks[kind] = task
     }
 
     func performPrimary(_ kind: RuntimeKind) {
@@ -221,16 +223,17 @@ final class AppModel {
         guard let snapshot = snapshots[kind] else { return }
         let name = aliasName
         let version = aliasVersion.isEmpty ? (selectedVersion(kind)?.name ?? "") : aliasVersion
+        let model = UncheckedBox(value: self)
         Task {
             do {
-                try await provider(for: kind).setAlias(name: name, version: version, backend: snapshot.backend)
-                aliases[kind] = await provider(for: kind).aliases(backend: snapshot.backend)
-                aliasName = ""
-                aliasVersion = ""
+                try await model.value.provider(for: kind).setAlias(name: name, version: version, backend: snapshot.backend)
+                model.value.aliases[kind] = await model.value.provider(for: kind).aliases(backend: snapshot.backend)
+                model.value.aliasName = ""
+                model.value.aliasVersion = ""
             } catch let failure as RuntimeFailure {
-                failures[kind] = failure.message
+                model.value.failures[kind] = failure.message
             } catch {
-                failures[kind] = L("没有保存别名。")
+                model.value.failures[kind] = L("没有保存别名。")
             }
         }
     }
@@ -238,14 +241,15 @@ final class AppModel {
     func removeAlias(_ alias: VersionAlias) {
         let kind = selectedKind
         guard let snapshot = snapshots[kind] else { return }
+        let model = UncheckedBox(value: self)
         Task {
             do {
-                try await provider(for: kind).removeAlias(name: alias.name, backend: snapshot.backend)
-                aliases[kind] = await provider(for: kind).aliases(backend: snapshot.backend)
+                try await model.value.provider(for: kind).removeAlias(name: alias.name, backend: snapshot.backend)
+                model.value.aliases[kind] = await model.value.provider(for: kind).aliases(backend: snapshot.backend)
             } catch let failure as RuntimeFailure {
-                failures[kind] = failure.message
+                model.value.failures[kind] = failure.message
             } catch {
-                failures[kind] = L("没有删除别名。")
+                model.value.failures[kind] = L("没有删除别名。")
             }
         }
     }
@@ -387,18 +391,19 @@ final class AppModel {
         }
         switching.insert(kind)
         failures[kind] = nil
+        let model = UncheckedBox(value: self)
         Task {
             do {
                 try await ShellCommand.succeed(script)
                 guard !Task.isCancelled else { return }
-                switching.remove(kind)
-                refresh(kind)
+                model.value.switching.remove(kind)
+                model.value.refresh(kind)
             } catch let failure as RuntimeFailure {
-                switching.remove(kind)
-                failures[kind] = failure.message
+                model.value.switching.remove(kind)
+                model.value.failures[kind] = failure.message
             } catch {
-                switching.remove(kind)
-                failures[kind] = L("切换没有成功。")
+                model.value.switching.remove(kind)
+                model.value.failures[kind] = L("切换没有成功。")
             }
         }
     }
@@ -429,6 +434,7 @@ final class AppModel {
         let handle = ShellHandle()
         let token = session.begin(script, handle: handle)
         let session = UncheckedBox(value: self.session)
+        let model = UncheckedBox(value: self)
         let handler: @Sendable (String) -> Void = { text in
             Task { @MainActor in
                 guard session.value.isCurrent(token) else { return }
@@ -446,9 +452,9 @@ final class AppModel {
             session.value.finish(token)
             if output.status != 0 {
                 let message = ShellMessage.display(output.stderr.isEmpty ? output.stdout : output.stderr)
-                failures[kind] = message.isEmpty ? L("命令没有成功。") : message
+                model.value.failures[kind] = message.isEmpty ? L("命令没有成功。") : message
             } else {
-                refresh(kind)
+                model.value.refresh(kind)
             }
         }
         session.value.track(task)
