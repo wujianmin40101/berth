@@ -1,6 +1,10 @@
 import Foundation
 import Observation
 
+private struct UncheckedBox<Value>: @unchecked Sendable {
+    let value: Value
+}
+
 @Observable
 final class AppModel {
     var selectedKind: RuntimeKind = .node
@@ -424,22 +428,22 @@ final class AppModel {
         failures[kind] = nil
         let handle = ShellHandle()
         let token = session.begin(script, handle: handle)
-        let session = self.session
+        let session = UncheckedBox(value: self.session)
         let handler: @Sendable (String) -> Void = { text in
             Task { @MainActor in
-                guard session.isCurrent(token) else { return }
-                session.append(text)
+                guard session.value.isCurrent(token) else { return }
+                session.value.append(text)
             }
         }
         let task = Task {
             let output = await Shell.run(script, timeout: timeout, handle: handle, onOutput: handler)
-            guard session.isCurrent(token) else { return }
+            guard session.value.isCurrent(token) else { return }
             if handle.isCancelled || output.status == 130 {
-                session.append(L("\n已取消。\n"))
-                session.finish(token)
+                session.value.append(L("\n已取消。\n"))
+                session.value.finish(token)
                 return
             }
-            session.finish(token)
+            session.value.finish(token)
             if output.status != 0 {
                 let message = ShellMessage.display(output.stderr.isEmpty ? output.stdout : output.stderr)
                 failures[kind] = message.isEmpty ? L("命令没有成功。") : message
@@ -447,7 +451,7 @@ final class AppModel {
                 refresh(kind)
             }
         }
-        session.track(task)
+        session.value.track(task)
     }
 
     private func provider(for kind: RuntimeKind) -> any RuntimeProvider {

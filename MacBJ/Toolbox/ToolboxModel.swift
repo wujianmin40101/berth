@@ -1,6 +1,10 @@
 import Foundation
 import Observation
 
+private struct UncheckedBox<Value>: @unchecked Sendable {
+    let value: Value
+}
+
 struct DevService: Codable, Identifiable, Equatable {
     var id: UUID
     var name: String
@@ -152,16 +156,17 @@ final class ToolboxModel {
         process.standardOutput = pipe
         process.standardError = pipe
         let identifier = service.id
+        let model = UncheckedBox(value: self)
         pipe.fileHandleForReading.readabilityHandler = { handle in
             let text = String(decoding: handle.availableData, as: UTF8.self)
             guard !text.isEmpty else { return }
             Task { @MainActor in
-                self.appendLog(identifier, text)
+                model.value.appendLog(identifier, text)
             }
         }
         process.terminationHandler = { _ in
             Task { @MainActor in
-                self.finish(identifier)
+                model.value.finish(identifier)
             }
         }
         do {
