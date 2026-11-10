@@ -120,6 +120,7 @@ final class ThemeCurtainView: NSView {
 }
 
 enum ThemeCapture {
+    @MainActor
     static func cgImage(of view: NSView) -> CGImage? {
         view.layoutSubtreeIfNeeded()
         let bounds = view.bounds
