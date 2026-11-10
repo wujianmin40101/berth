@@ -185,7 +185,7 @@ private struct UninstallLoading: View {
     }
 }
 
-private struct AppBundleIcon: View {
+struct AppBundleIcon: View {
     var path: String
 
     var body: some View {
