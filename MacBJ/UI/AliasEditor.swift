@@ -13,7 +13,7 @@ struct AliasEditor: View {
                 .font(.headline)
             Text(L("脚本里可以用这个名字代替版本号。default 仍然用「设为全局默认」。"))
                 .font(.callout)
-                .foregroundStyle(.secondary)
+                .textSecondaryStyle()
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 8) {
@@ -25,7 +25,7 @@ struct AliasEditor: View {
 
             if aliases.isEmpty {
                 Text(L("还没有别名。"))
-                    .foregroundStyle(.secondary)
+                    .textSecondaryStyle()
             } else {
                 List(aliases) { alias in
                     HStack {
@@ -33,7 +33,7 @@ struct AliasEditor: View {
                         Spacer()
                         Text(alias.version)
                             .font(.body.monospaced())
-                            .foregroundStyle(.secondary)
+                            .textSecondaryStyle()
                         Button(L("删除")) { onRemove(alias) }
                             .buttonStyle(PlainPressStyle())
                     }
@@ -55,7 +55,7 @@ struct HookConfirmView: View {
                 .font(.headline)
             Text(L("写入前会把 ~/.zshrc 备份为 ~/.zshrc.macbj-bak。进入有 .nvmrc 或 .python-version 的目录时切到对应版本，离开后回到全局默认。已经打开的终端要新开一个，或再 cd 一次。"))
                 .font(.callout)
-                .foregroundStyle(.secondary)
+                .textSecondaryStyle()
                 .fixedSize(horizontal: false, vertical: true)
             ScrollView {
                 Text(ShellHook.script)
@@ -83,7 +83,7 @@ struct CommandOutputBar: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(session.isRunning ? L("正在执行") : L("刚才执行的命令"))
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .textSecondaryStyle()
             Text(session.command)
                 .font(.system(.caption, design: .monospaced))
                 .lineLimit(4)

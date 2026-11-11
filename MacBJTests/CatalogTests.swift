@@ -3,7 +3,8 @@ import Testing
 @testable import MacBJ
 
 struct CatalogTests {
-    @Test func `node index marks current stable and the maintained lts lines`() throws {
+    @Test("node index marks current stable and the maintained lts lines")
+    func nodeIndexMarksCurrentStableAndTheMaintainedLtsLines() throws {
         let data = try #require(nodeIndexJSON.data(using: .utf8))
         let releases = NodeIndex.parse(data)
         let offerings = NodeIndex.offerings(releases)
@@ -25,7 +26,8 @@ struct CatalogTests {
         #expect(NodeIndex.displayDate(nil) == "—")
     }
 
-    @Test func `catalog keeps release metadata on an installed version`() {
+    @Test("catalog keeps release metadata on an installed version")
+    func catalogKeepsReleaseMetadataOnAnInstalledVersion() {
         let installed = [RuntimeVersion(name: "v22.23.4", isCurrent: true)]
         let remote = [
             RuntimeVersion(
@@ -49,7 +51,8 @@ struct CatalogTests {
         #expect(version?.releasedOn == "2026-01-01")
     }
 
-    @Test func `python remote list keeps the newest supported patch`() {
+    @Test("python remote list keeps the newest supported patch")
+    func pythonRemoteListKeepsTheNewestSupportedPatch() {
         let offerings = PythonRemoteList.offerings(from: """
         Available versions:
           3.9.6
@@ -69,7 +72,8 @@ struct CatalogTests {
         #expect(PythonReleaseTable.channel(for: "3.9.6") == .deprecated)
     }
 
-    @Test func `project pins prefer nvmrc and keep pyproject read only`() throws {
+    @Test("project pins prefer nvmrc and keep pyproject read only")
+    func projectPinsPreferNvmrcAndKeepPyprojectReadOnly() throws {
         let root = FileManager.default.temporaryDirectory.appending(path: "macbj-pins-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -99,7 +103,8 @@ struct CatalogTests {
         #expect(toml.contains("requires-python = \">=3.12\""))
     }
 
-    @Test func `alias names reject reserved words and shell syntax`() throws {
+    @Test("alias names reject reserved words and shell syntax")
+    func aliasNamesRejectReservedWordsAndShellSyntax() throws {
         #expect(AliasName.validated("default") == nil)
         #expect(AliasName.validated("my-default") == "my-default")
         #expect(throws: RuntimeFailure.self) {
@@ -120,7 +125,8 @@ struct CatalogTests {
         #expect(aliases == [VersionAlias(name: "my-default", version: "v20.20.2")])
     }
 
-    @Test func `nvm install command quotes the version and can point at the china mirror`() {
+    @Test("nvm install command quotes the version and can point at the china mirror")
+    func nvmInstallCommandQuotesTheVersionAndCanPointAtTheChinaMirror() {
         let script = NodeProvider().installScript(backend: .nvm, version: "v22.23.4", mirror: .china)
         #expect(script?.contains("export NVM_NODEJS_ORG_MIRROR='https://npmmirror.com/mirrors/node'") == true)
         #expect(script?.contains("nvm install 'v22.23.4'") == true)
@@ -130,7 +136,8 @@ struct CatalogTests {
         #expect(NodeProvider.aliasScript(backend: .nvm, name: "default", version: "v22.23.4") == nil)
     }
 
-    @Test func `shell hook replaces its own block and leaves the rest of zshrc`() throws {
+    @Test("shell hook replaces its own block and leaves the rest of zshrc")
+    func shellHookReplacesItsOwnBlockAndLeavesTheRestOfZshrc() throws {
         let original = "export FOO=1\n"
         let once = ShellHook.installing(into: original)
         let twice = ShellHook.installing(into: once)

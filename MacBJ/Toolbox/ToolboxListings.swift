@@ -5,6 +5,7 @@ struct PortUse: Identifiable, Equatable, Sendable {
     var pid: Int32
     var address: String
     var port: Int
+    var canStop: Bool = true
 
     var id: String { "\(pid):\(address)" }
 }
@@ -50,7 +51,11 @@ enum PortListing {
             let detail = output.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
             return .failure(ToolError(detail.isEmpty ? L("没有读到端口占用。") : detail))
         }
-        return .success(parse(output.stdout))
+        return .success(parse(output.stdout).map { row in
+            var copy = row
+            copy.canStop = ProcessGuard.canStop(pid: row.pid, command: row.command)
+            return copy
+        })
     }
 }
 
@@ -58,6 +63,7 @@ struct RuntimeProcess: Identifiable, Equatable, Sendable {
     var pid: Int32
     var memoryMB: Int
     var command: String
+    var canStop: Bool = true
 
     var id: Int32 { pid }
 }
@@ -89,21 +95,24 @@ enum ProcessListing {
             let detail = output.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
             return .failure(ToolError(detail.isEmpty ? L("没有读到进程列表。") : detail))
         }
-        return .success(parse(output.stdout))
+        return .success(parse(output.stdout).map { row in
+            var copy = row
+            copy.canStop = ProcessGuard.canStop(pid: row.pid, command: row.command)
+            return copy
+        })
     }
 }
 
 enum ProcessSignal {
     static func send(pid: Int32, force: Bool) async -> String? {
-        let selfPID = ProcessInfo.processInfo.processIdentifier
-        guard pid > 1, pid != selfPID else { return L("不能结束这个进程。") }
+        guard ProcessGuard.canStop(pid: pid) else { return L("不能结束这个进程。") }
         await stopTree(pid: pid, force: force)
         return nil
     }
 
     /// 只结束这个进程和它拉起来的子进程，不会按进程组去碰别的程序。
     static func stopTree(pid: Int32, force: Bool) async {
-        guard pid > 1, pid != ProcessInfo.processInfo.processIdentifier else { return }
+        guard ProcessGuard.canStop(pid: pid) else { return }
         let output = await Shell.run("/usr/bin/pgrep -P \(pid)", timeout: 4, login: false)
         let children = output.stdout.split(whereSeparator: \.isNewline).compactMap { line in
             Int32(line.trimmingCharacters(in: .whitespaces))
@@ -117,7 +126,7 @@ enum ProcessSignal {
 
     /// 退出应用时同步结束，不能再等异步任务。只处理这个进程和它的子进程。
     nonisolated static func stopTreeNow(pid: Int32, depth: Int = 0) {
-        guard depth < 16, pid > 1, pid != ProcessInfo.processInfo.processIdentifier else { return }
+        guard depth < 16, ProcessGuard.canStop(pid: pid) else { return }
         let children = command("/usr/bin/pgrep", ["-P", "\(pid)"])
             .split(whereSeparator: \.isNewline)
             .compactMap { Int32($0.trimmingCharacters(in: .whitespaces)) }

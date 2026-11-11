@@ -98,7 +98,7 @@ enum FeatureHelp {
 }
 
 private struct FeatureHelpKey: EnvironmentKey {
-    static let defaultValue: ((String, String) -> Void)? = nil
+    nonisolated(unsafe) static let defaultValue: ((String, String) -> Void)? = nil
 }
 
 extension EnvironmentValues {
@@ -124,9 +124,7 @@ struct FeatureHelpHost<Content: View>: View {
     var body: some View {
         ZStack(alignment: .topLeading) {
             content()
-                .blur(radius: reduceMotion || !visible ? 0 : 7)
                 .allowsHitTesting(!mounted)
-                .animation(overlayAnimation, value: visible)
             if mounted {
                 dialog
             }
@@ -176,7 +174,7 @@ struct FeatureHelpHost<Content: View>: View {
                     Button(action: dismiss) {
                         Image(systemName: "xmark")
                             .font(.system(size: 12, weight: .semibold))
-                            .frame(width: 28, height: 28)
+                            .frame(width: 44, height: 44)
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(PlainPressStyle(iconOnly: true))
@@ -186,7 +184,7 @@ struct FeatureHelpHost<Content: View>: View {
                 }
                 Text(explanation)
                     .font(.system(size: 13))
-                    .foregroundStyle(palette.ink.opacity(0.82))
+                    .foregroundStyle(palette.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
                 HStack {
                     Spacer()
@@ -204,7 +202,6 @@ struct FeatureHelpHost<Content: View>: View {
             .shadow(color: .black.opacity(palette.scheme == .dark ? 0.4 : 0.12), radius: 24, y: 10)
             .padding(16)
             .opacity(visible ? 1 : 0)
-            .scaleEffect(reduceMotion || visible ? 1 : (closing ? 0.98 : 0.96))
             .offset(y: reduceMotion || visible ? 0 : (closing ? 4 : 8))
             .animation(panelAnimation, value: visible)
         }
@@ -214,16 +211,11 @@ struct FeatureHelpHost<Content: View>: View {
 
     private var overlayAnimation: Animation? {
         guard !reduceMotion else { return nil }
-        return visible
-            ? .timingCurve(0.16, 1, 0.3, 1, duration: 0.24)
-            : .timingCurve(0.22, 1, 0.36, 1, duration: 0.16)
+        return visible ? Motion.enter : Motion.exit
     }
 
     private var panelAnimation: Animation? {
-        guard !reduceMotion else { return nil }
-        return visible
-            ? .timingCurve(0.16, 1, 0.3, 1, duration: 0.4)
-            : .timingCurve(0.22, 1, 0.36, 1, duration: 0.16)
+        overlayAnimation
     }
 
     private func dismiss() {
@@ -239,7 +231,7 @@ struct FeatureHelpHost<Content: View>: View {
         closing = true
         visible = false
         Task {
-            try? await Task.sleep(for: .milliseconds(180))
+            try? await Task.sleep(for: .milliseconds(160))
             guard token == dismissToken, !visible else { return }
             mounted = false
             closing = false

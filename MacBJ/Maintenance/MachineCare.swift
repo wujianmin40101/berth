@@ -658,6 +658,7 @@ nonisolated struct SpeedHog: Equatable, Identifiable, Sendable {
     var name: String
     var cpu: Double
     var bytes: UInt64
+    var canStop: Bool = true
     var id: Int32 { pid }
 }
 
@@ -670,8 +671,6 @@ nonisolated struct SpeedLoginItem: Equatable, Identifiable, Sendable {
 }
 
 nonisolated enum SpeedTune {
-    nonisolated static let protected = ["kernel_task", "launchd", "WindowServer", "loginwindow"]
-
     nonisolated static func parseDisabled(_ text: String) -> [String: Bool] {
         var result: [String: Bool] = [:]
         for line in text.split(separator: "\n") {
@@ -699,9 +698,15 @@ nonisolated enum SpeedTune {
             let fields = line.split(whereSeparator: { $0 == " " || $0 == "\t" }).map(String.init)
             guard fields.count >= 4, let pid = Int32(fields[0]), let cpu = Double(fields[1]), let rss = UInt64(fields[2]) else { continue }
             let name = fields.dropFirst(3).joined(separator: " ")
-            guard pid > 1, pid != ProcessInfo.processInfo.processIdentifier, !protected.contains(name) else { continue }
             guard cpu >= 1 || rss > 200_000 else { continue }
-            rows.append(SpeedHog(pid: pid, name: name, cpu: cpu, bytes: rss * 1024))
+            let executable = ProcessGuard.executablePath(pid: pid)
+            rows.append(SpeedHog(
+                pid: pid,
+                name: name,
+                cpu: cpu,
+                bytes: rss * 1024,
+                canStop: ProcessGuard.canStop(pid: pid, path: executable, command: name)
+            ))
         }
         return rows.sorted { lhs, rhs in
             if lhs.cpu == rhs.cpu { return lhs.bytes > rhs.bytes }
@@ -728,9 +733,8 @@ nonisolated enum SpeedTune {
         return items.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
-    nonisolated static func quit(pid: Int32, name: String) throws {
-        guard pid > 1, pid != ProcessInfo.processInfo.processIdentifier else { throw ToolError(L("不能结束这个进程")) }
-        guard !protected.contains(name) else { throw ToolError(L("不能结束这个进程")) }
+    nonisolated static func quit(pid: Int32, name _: String) throws {
+        guard ProcessGuard.canStop(pid: pid) else { throw ToolError(L("不能结束这个进程。")) }
         guard kill(pid, SIGTERM) == 0 else { throw ToolError(L("没有结束这个进程")) }
     }
 
@@ -747,12 +751,14 @@ nonisolated enum SpeedTune {
     }
 
     nonisolated static func administrator(_ shell: String) async -> String? {
-        let script = "do shell script \"\(shell)\" with administrator privileges"
-        let quoted = "'" + script.replacingOccurrences(of: "'", with: "'\\''") + "'"
-        let command = "osascript -e " + quoted
-        let output = await Shell.run(command, timeout: 120, login: false)
-        if output.status == 0 { return nil }
-        let detail = output.stderr.trimmingCharacters(in: .whitespacesAndNewlines)
+        let outcome = await Task.detached(priority: .userInitiated) {
+            PrivilegedShell.run(shell)
+        }.value
+        if outcome.cancelled {
+            return L("没有继续。取消密码框后不会改任何东西。")
+        }
+        if outcome.status == 0 { return nil }
+        let detail = outcome.text.trimmingCharacters(in: .whitespacesAndNewlines)
         if detail.isEmpty || detail.contains("User canceled") || detail.contains("-128") {
             return L("没有继续。取消密码框后不会改任何东西。")
         }

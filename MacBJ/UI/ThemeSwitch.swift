@@ -11,24 +11,22 @@ struct ThemeSwitchButton: View {
     var host: ThemeHost
     var action: () -> Void
     @Environment(\.palette) private var palette
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Button(action: action) {
             SunMoonMorphIcon(isDark: isDark, color: palette.ink)
                 .frame(width: 20, height: 20)
-                .scaleEffect(isDark ? 1.08 : 1)
-                .animation(reduceMotion ? .linear(duration: 0.01) : .timingCurve(0.18, 0.89, 0.32, 1.28, duration: 0.36), value: isDark)
+                .frame(width: 38, height: 38)
+                .background(palette.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(palette.line)
+                )
         }
         .buttonStyle(ThemePressStyle())
-        .frame(width: 38, height: 38)
-        .background(palette.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(palette.line)
-        )
+        .frame(width: 44, height: 44)
         .background(ThemeAnchor(host: host))
-        .contentShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .contentShape(Rectangle())
         .help(isDark ? L("浅色模式") : L("深色模式"))
         .accessibilityLabel(isDark ? L("切换到浅色模式") : L("切换到深色模式"))
         .accessibilityValue(isDark ? L("深色") : L("浅色"))
@@ -41,10 +39,7 @@ private struct ThemePressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .scaleEffect(reduceMotion || !configuration.isPressed ? 1 : 0.96)
-            .animation(
-                reduceMotion ? nil : .timingCurve(0.18, 0.89, 0.32, 1.28, duration: 0.15),
-                value: configuration.isPressed
-            )
+            .animation(reduceMotion ? nil : Motion.press, value: configuration.isPressed)
     }
 }
 
@@ -96,29 +91,20 @@ final class ThemeCurtainView: NSView {
         CATransaction.commit()
     }
 
-    private var started: CFTimeInterval = 0
-
     func play() {
-        started = CACurrentMediaTime()
-        tick()
-    }
-
-    private func tick() {
-        guard window != nil else { return }
-        let raw = min(1, max(0, CGFloat(CACurrentMediaTime() - started) / 0.48))
-        let eased = ThemeEase.reveal(raw)
-        let radius = expanding ? eased * endRadius : (1 - eased) * endRadius
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        shapeMask.path = circlePath(radius: radius)
-        CATransaction.commit()
-        guard raw < 1 else {
+        let animation = CABasicAnimation(keyPath: "path")
+        animation.fromValue = circlePath(radius: expanding ? 0 : endRadius)
+        animation.toValue = circlePath(radius: expanding ? endRadius : 0)
+        animation.duration = Motion.theme
+        animation.timingFunction = CAMediaTimingFunction(controlPoints: 0.16, 1, 0.3, 1)
+        animation.fillMode = .forwards
+        animation.isRemovedOnCompletion = false
+        shapeMask.add(animation, forKey: "reveal")
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(Motion.theme))
+            guard window != nil else { return }
             removeFromSuperview()
             onFinish?()
-            return
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.016) { [weak self] in
-            self?.tick()
         }
     }
 
@@ -133,30 +119,8 @@ final class ThemeCurtainView: NSView {
     }
 }
 
-enum ThemeEase {
-    /// cubic-bezier(0.16, 1, 0.3, 1)
-    static func reveal(_ time: CGFloat) -> CGFloat {
-        let t = solve(time, x1: 0.16, x2: 0.3)
-        return cubic(t, c1: 1, c2: 1)
-    }
-
-    private static func cubic(_ t: CGFloat, c1: CGFloat, c2: CGFloat) -> CGFloat {
-        let u = 1 - t
-        return 3 * u * u * t * c1 + 3 * u * t * t * c2 + t * t * t
-    }
-
-    private static func solve(_ x: CGFloat, x1: CGFloat, x2: CGFloat) -> CGFloat {
-        var lo: CGFloat = 0
-        var hi: CGFloat = 1
-        for _ in 0..<20 {
-            let mid = (lo + hi) / 2
-            if cubic(mid, c1: x1, c2: x2) < x { lo = mid } else { hi = mid }
-        }
-        return (lo + hi) / 2
-    }
-}
-
 enum ThemeCapture {
+    @MainActor
     static func cgImage(of view: NSView) -> CGImage? {
         view.layoutSubtreeIfNeeded()
         let bounds = view.bounds

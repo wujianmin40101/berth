@@ -35,8 +35,8 @@ struct ToolboxPage: View {
     private func pluginSection(_ title: String, _ plugins: [ToolboxPlugin]) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 13, weight: .semibold))
+                .textSecondaryStyle()
                 .padding(.horizontal, 8)
             ForEach(plugins) { plugin in
                 pluginRow(plugin)
@@ -58,7 +58,7 @@ struct ToolboxPage: View {
                     Spacer(minLength: 0)
                 }
                 .font(.system(size: 13, weight: selection == plugin ? .semibold : .regular))
-                .foregroundStyle(on ? palette.ink : .secondary)
+                .foregroundStyle(on ? palette.ink : palette.textSecondary)
             }
             .buttonStyle(PlainPressStyle())
             Toggle("", isOn: Binding(
@@ -86,16 +86,16 @@ struct ToolboxPage: View {
             }
             .padding(.horizontal, 28)
             .padding(.top, 8)
-            .padding(.bottom, 20)
+            .padding(.bottom, 28)
         }
     }
 
     private var disabledTool: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 18) {
             PageHeader(title: selection.title, subtitle: selection.summary, help: helpText(selection))
             Text(L("这个工具默认没有打开。启用后会出现在左侧导航，版本管理不受影响。"))
                 .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+                .textSecondaryStyle()
             Button(L("启用%@", selection.title)) {
                 update(selection, enabled: true)
             }
@@ -171,7 +171,7 @@ struct ToolTextField: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundStyle(.secondary)
+                .textSecondaryStyle()
             TextField(title, text: $text)
                 .textFieldStyle(.plain)
                 .font(.system(size: 13))

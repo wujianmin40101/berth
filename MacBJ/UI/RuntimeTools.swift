@@ -22,12 +22,12 @@ struct PortsTool: View {
             if !message.isEmpty {
                 Text(message)
                     .font(.system(size: 12))
-                    .foregroundStyle(.secondary)
+                    .textSecondaryStyle()
             }
             if rows.isEmpty, !loading {
                 Text(message.isEmpty ? L("没有正在监听的 TCP 端口。") : " ")
                     .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
+                    .textSecondaryStyle()
             }
             ScrollView {
                 LazyVStack(spacing: 0) {
@@ -52,7 +52,7 @@ struct PortsTool: View {
     private func portRow(_ row: PortUse) -> some View {
         HStack(spacing: 12) {
             Text(":\(row.port)")
-                .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                .font(.system(size: 13, weight: .semibold, design: .monospaced))
                 .frame(width: 72, alignment: .leading)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
@@ -61,16 +61,22 @@ struct PortsTool: View {
                     if ownedPIDs.contains(row.pid) {
                         Text(L("本地服务"))
                             .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(.secondary)
+                            .textSecondaryStyle()
                     }
                 }
                 Text("PID \(row.pid) · \(row.address)")
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .textSecondaryStyle()
             }
             Spacer()
-            Button(L("结束")) { pending = row }
-                .buttonStyle(FieldMenuStyle())
+            if row.canStop {
+                Button(L("结束")) { pending = row }
+                    .buttonStyle(FieldMenuStyle())
+            } else {
+                Text(L("不能结束这个进程。"))
+                    .font(.system(size: 12))
+                    .textSecondaryStyle()
+            }
         }
         .padding(.vertical, 8)
     }
@@ -95,6 +101,10 @@ struct PortsTool: View {
     private func signal(force: Bool) {
         guard let target = pending else { return }
         pending = nil
+        guard target.canStop else {
+            message = L("不能结束这个进程。")
+            return
+        }
         Task {
             message = await ProcessSignal.send(pid: target.pid, force: force) ?? L("已发送结束信号。")
             await reload()
@@ -122,7 +132,7 @@ struct ProcessesTool: View {
                 Task { await reload() }
             }
             if !message.isEmpty {
-                Text(message).font(.system(size: 12)).foregroundStyle(.secondary)
+                Text(message).font(.system(size: 12)).textSecondaryStyle()
             }
             ScrollView {
                 LazyVStack(spacing: 0) {
@@ -138,18 +148,24 @@ struct ProcessesTool: View {
                                     if ownedPIDs.contains(row.pid) {
                                         Text(L("本地服务"))
                                             .font(.system(size: 11, weight: .semibold))
-                                            .foregroundStyle(.secondary)
+                                            .textSecondaryStyle()
                                     }
                                 }
                                 Text(row.command)
                                     .font(.system(size: 11, design: .monospaced))
-                                    .foregroundStyle(.secondary)
+                                    .textSecondaryStyle()
                                     .lineLimit(2)
                                     .textSelection(.enabled)
                             }
                             Spacer()
-                            Button(L("结束")) { pending = row }
-                                .buttonStyle(FieldMenuStyle())
+                            if row.canStop {
+                                Button(L("结束")) { pending = row }
+                                    .buttonStyle(FieldMenuStyle())
+                            } else {
+                                Text(L("不能结束这个进程。"))
+                                    .font(.system(size: 12))
+                                    .textSecondaryStyle()
+                            }
                         }
                         .padding(.vertical, 8)
                         Rectangle().fill(Color.primary.opacity(0.06)).frame(height: 1)
@@ -159,7 +175,7 @@ struct ProcessesTool: View {
             if rows.isEmpty, !loading {
                 Text(L("现在没有 Node 或 Python 进程。"))
                     .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
+                    .textSecondaryStyle()
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -189,6 +205,10 @@ struct ProcessesTool: View {
     private func signal(force: Bool) {
         guard let target = pending else { return }
         pending = nil
+        guard target.canStop else {
+            message = L("不能结束这个进程。")
+            return
+        }
         Task {
             message = await ProcessSignal.send(pid: target.pid, force: force) ?? L("已发送结束信号。")
             await reload()
@@ -231,13 +251,13 @@ struct ServicesTool: View {
                         if !command.trimmingCharacters(in: .whitespaces).isEmpty {
                             Text(L("将执行 %@", command))
                                 .font(.system(size: 12, design: .monospaced))
-                                .foregroundStyle(.secondary)
+                                .textSecondaryStyle()
                                 .textSelection(.enabled)
                         }
                     }
                 }
                 if !message.isEmpty {
-                    Text(message).font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(message).font(.system(size: 12)).textSecondaryStyle()
                 }
                 ForEach(model.services) { service in
                     serviceCard(service)
@@ -253,20 +273,20 @@ struct ServicesTool: View {
                 HStack {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(service.name)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 13, weight: .semibold))
                         Text(service.command)
                             .font(.system(size: 12, design: .monospaced))
-                            .foregroundStyle(.secondary)
+                            .textSecondaryStyle()
                             .lineLimit(1)
                     }
                     Spacer()
                     Text(active ? L("运行中") : L("已停止"))
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.secondary)
+                        .textSecondaryStyle()
                 }
                 Text(service.directory)
                     .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
+                    .textSecondaryStyle()
                     .lineLimit(1)
                 HStack {
                     Button(active ? L("停止") : L("启动")) {

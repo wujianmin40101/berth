@@ -2,7 +2,8 @@ import Testing
 @testable import MacBJ
 
 struct ListingTests {
-    @Test func `nvm list uses the default alias as the active version`() {
+    @Test("nvm list uses the default alias as the active version")
+    func nvmListUsesTheDefaultAliasAsTheActiveVersion() {
         let versions = NodeListing.versions(backend: .nvm, list: """
                v20.20.2 *
         ->     v22.23.4 *
@@ -18,7 +19,8 @@ struct ListingTests {
         #expect(versions.first(where: \.isCurrent)?.name == "v22.23.4")
     }
 
-    @Test func `nvm prefers default over the arrow when they differ`() {
+    @Test("nvm prefers default over the arrow when they differ")
+    func nvmPrefersDefaultOverTheArrowWhenTheyDiffer() {
         let versions = NodeListing.versions(backend: .nvm, list: """
         ->     v20.20.2 *
                v22.23.4 *
@@ -28,7 +30,8 @@ struct ListingTests {
         #expect(versions.first(where: \.isCurrent)?.name == "v22.23.4")
     }
 
-    @Test func `fnm list marks the default alias`() {
+    @Test("fnm list marks the default alias")
+    func fnmListMarksTheDefaultAlias() {
         let versions = NodeListing.versions(backend: .fnm, list: """
         * v22.14.0 default
           v20.18.1
@@ -39,7 +42,8 @@ struct ListingTests {
         #expect(versions.first(where: \.isCurrent)?.name == "v22.14.0")
     }
 
-    @Test func `volta list marks the default runtime`() {
+    @Test("volta list marks the default runtime")
+    func voltaListMarksTheDefaultRuntime() {
         let versions = NodeListing.versions(backend: .volta, list: """
         runtime node@20.11.0
         runtime node@22.14.0 (default)
@@ -49,7 +53,8 @@ struct ListingTests {
         #expect(versions.first(where: \.isCurrent)?.name == "22.14.0")
     }
 
-    @Test func `pyenv uses the global version when the star is local`() {
+    @Test("pyenv uses the global version when the star is local")
+    func pyenvUsesTheGlobalVersionWhenTheStarIsLocal() {
         let versions = PythonListing.versions(
             backend: .pyenv,
             global: "3.11.9\n",
@@ -64,7 +69,8 @@ struct ListingTests {
         #expect(versions.first(where: \.isCurrent)?.name == "3.11.9")
     }
 
-    @Test func `uv list keeps one row per version and marks the resolved interpreter`() {
+    @Test("uv list keeps one row per version and marks the resolved interpreter")
+    func uvListKeepsOneRowPerVersionAndMarksTheResolvedInterpreter() {
         let versions = PythonListing.versions(
             backend: .uv,
             global: """
@@ -82,7 +88,8 @@ struct ListingTests {
         #expect(versions.first(where: \.isCurrent)?.name == "3.14.3")
     }
 
-    @Test func `probe text separates backend, global, and list`() {
+    @Test("probe text separates backend, global, and list")
+    func probeTextSeparatesBackendGlobalAndList() {
         let probe = ProbeText.parse("""
         noise from the shell
         __BACKEND__ uv
@@ -98,13 +105,14 @@ struct ListingTests {
         #expect(!probe.list.contains("Python 3.14.3"))
     }
 
-    @Test(arguments: ["22; rm -rf /", "3.12 && uname", "", "v22.14.0'"])
-    func `version tokens reject shell syntax`(raw: String) {
+    @Test("version tokens reject shell syntax", arguments: ["22; rm -rf /", "3.12 && uname", "", "v22.14.0'"])
+    func versionTokensRejectShellSyntax(raw: String) {
         #expect(VersionToken.validated(raw) == nil)
         #expect(RuntimeScripts.activate(.node, backend: .nvm, version: raw) == nil)
     }
 
-    @Test func `nvm activate command quotes the version`() {
+    @Test("nvm activate command quotes the version")
+    func nvmActivateCommandQuotesTheVersion() {
         let script = RuntimeScripts.activate(.node, backend: .nvm, version: "v22.23.4")
         #expect(script?.contains("nvm alias default 'v22.23.4'") == true)
     }

@@ -3,7 +3,8 @@ import Testing
 @testable import MacBJ
 
 struct MaintenanceTests {
-    @Test func `memory slices match activity monitor buckets`() {
+    @Test("memory slices match activity monitor buckets")
+    func memorySlicesMatchActivityMonitorBuckets() {
         let counts = MemoryCounts(
             pageSize: 16_384,
             free: 400,
@@ -24,14 +25,16 @@ struct MaintenanceTests {
         #expect(slices[4].bytes == 450 * 16_384)
     }
 
-    @Test func `memory snapshot reads physical memory`() {
+    @Test("memory snapshot reads physical memory")
+    func memorySnapshotReadsPhysicalMemory() {
         let report = MemoryMap.snapshot()
         #expect(report.total > 0)
         #expect(!report.slices.isEmpty)
         #expect(!report.summary.isEmpty)
     }
 
-    @Test func `processes inside one app bundle are grouped`() {
+    @Test("processes inside one app bundle are grouped")
+    func processesInsideOneAppBundleAreGrouped() {
         let rows: [(pid: Int32, bytes: UInt64, cpu: Double, command: String)] = [
             (10, 100, 1.5, "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
             (11, 50, 0.5, "/Applications/Google Chrome.app/Contents/Frameworks/Google Chrome Helper.app/Contents/MacOS/helper"),
@@ -46,7 +49,8 @@ struct MaintenanceTests {
         #expect(grouped[1].path == "/usr/local/bin/node")
     }
 
-    @Test func `leftovers stay on the bundle id and drop shared names`() {
+    @Test("leftovers stay on the bundle id and drop shared names")
+    func leftoversStayOnTheBundleIdAndDropSharedNames() {
         let library = URL(fileURLWithPath: "/Users/demo/Library")
         let demo = AppUninstall.Identity(name: "Demo", bundleID: "com.example.demo")
         let other = AppUninstall.Identity(name: "Demo", bundleID: "com.example.other")
@@ -57,7 +61,8 @@ struct MaintenanceTests {
         #expect(!mine.contains("/Users/demo/Library/Caches/com.example.other"))
     }
 
-    @Test func `bundle ids with a path are rejected`() {
+    @Test("bundle ids with a path are rejected")
+    func bundleIdsWithAPathAreRejected() {
         #expect(!AppUninstall.safeToken("../Library"))
         #expect(!AppUninstall.safeToken("com.example/evil"))
         #expect(AppUninstall.safeToken("com.example.demo"))
@@ -65,7 +70,8 @@ struct MaintenanceTests {
         #expect(!AppUninstall.safeName("../Chrome"))
     }
 
-    @Test func `only a direct app in Applications can be uninstalled`() {
+    @Test("only a direct app in Applications can be uninstalled")
+    func onlyADirectAppInApplicationsCanBeUninstalled() {
         let home = URL(fileURLWithPath: "/Users/demo")
         #expect(AppUninstall.isDirectApp(path: "/Applications/Demo.app", home: home))
         #expect(AppUninstall.isDirectApp(path: "/Users/demo/Applications/Demo.app", home: home))
@@ -73,13 +79,15 @@ struct MaintenanceTests {
         #expect(!AppUninstall.isDirectApp(path: "/tmp/Demo.app", home: home))
     }
 
-    @Test func `cache deletion refuses a path outside its root`() {
+    @Test("cache deletion refuses a path outside its root")
+    func cacheDeletionRefusesAPathOutsideItsRoot() {
         let root = URL(fileURLWithPath: "/Users/demo/Library/Caches")
         #expect(CacheClean.accepts(child: URL(fileURLWithPath: "/Users/demo/Library/Caches/com.example"), root: root))
         #expect(!CacheClean.accepts(child: URL(fileURLWithPath: "/Users/demo/Documents"), root: root))
     }
 
-    @Test func `allocated size counts a file and does not follow a symlink`() throws {
+    @Test("allocated size counts a file and does not follow a symlink")
+    func allocatedSizeCountsAFileAndDoesNotFollowASymlink() throws {
         let root = FileManager.default.temporaryDirectory.appendingPathComponent("macbj-size-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: root) }
@@ -98,28 +106,32 @@ struct MaintenanceTests {
         #expect(!scan.children.contains { $0.path.hasSuffix("/jump") })
     }
 
-    @Test func `a passed size deadline returns without listing`() {
+    @Test("a passed size deadline returns without listing")
+    func aPassedSizeDeadlineReturnsWithoutListing() {
         let started = Date()
         let scan = AllocatedSize.tree("/Users", deadline: Date().addingTimeInterval(-1))
         #expect(Date().timeIntervalSince(started) < 3)
         #expect(!scan.complete)
     }
 
-    @Test func `du lines keep the path after the tab`() {
+    @Test("du lines keep the path after the tab")
+    func duLinesKeepThePathAfterTheTab() {
         let rows = DirectorySize.parse("2315284\t/opt\n1024\t/opt/homebrew\n")
         #expect(rows.map(\.path) == ["/opt", "/opt/homebrew"])
         #expect(rows[0].bytes == 2_315_284 * 1024)
         #expect(DirectorySize.parse("du: /Library/TCC: Operation not permitted\n").isEmpty)
     }
 
-    @Test func `spotlight last used date parses and ignores a missing value`() {
+    @Test("spotlight last used date parses and ignores a missing value")
+    func spotlightLastUsedDateParsesAndIgnoresAMissingValue() {
         let date = SpotlightDate.parse("2026-11-05 06:54:40 +0000")
         #expect(date != nil)
         #expect(SpotlightDate.parse("-") == nil)
         #expect(SpotlightDate.parse("(null)") == nil)
     }
 
-    @Test func `treemap tiles cover the rectangle in proportion`() {
+    @Test("treemap tiles cover the rectangle in proportion")
+    func treemapTilesCoverTheRectangleInProportion() {
         let tiles = TreemapLayout.tiles(
             [
                 TreemapInput(id: "a", title: "A", value: 200),
@@ -134,7 +146,8 @@ struct MaintenanceTests {
         #expect(tiles.allSatisfy { $0.rect.width > 0 && $0.rect.height > 0 })
     }
 
-    @Test func `launchctl disabled lines use both old and new spellings`() {
+    @Test("launchctl disabled lines use both old and new spellings")
+    func launchctlDisabledLinesUseBothOldAndNewSpellings() {
         let text = """
         "com.example.one" => disabled
         "com.example.two" => enabled
@@ -146,5 +159,31 @@ struct MaintenanceTests {
         #expect(parsed["com.example.two"] == true)
         #expect(parsed["com.example.old"] == false)
         #expect(parsed["com.example.new"] == true)
+    }
+
+    @Test("system executables and Berth cannot be stopped")
+    func systemExecutablesAndBerthCannotBeStopped() {
+        let other: Int32 = ProcessInfo.processInfo.processIdentifier == 42 ? 43 : 42
+        #expect(!ProcessGuard.isSystemLocation("/usr/local/bin/node"))
+        #expect(!ProcessGuard.isSystemLocation("/opt/homebrew/bin/node"))
+        #expect(ProcessGuard.isSystemLocation("/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer"))
+        #expect(ProcessGuard.isSystemLocation("/System/Library/CoreServices/ControlCenter.app/Contents/MacOS/ControlCenter"))
+        #expect(ProcessGuard.isSystemLocation("/usr/libexec/syspolicyd"))
+        #expect(ProcessGuard.isSystemLocation("/usr/bin/ssh"))
+        #expect(ProcessGuard.isSystemLocation("/usr/sbin/syslogd"))
+        #expect(ProcessGuard.canStop(pid: other, path: "/usr/local/bin/node"))
+        #expect(ProcessGuard.canStop(pid: other, path: "/opt/homebrew/bin/python3"))
+        #expect(!ProcessGuard.canStop(pid: other, path: "/System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer"))
+        #expect(!ProcessGuard.canStop(pid: other, path: "/System/Library/CoreServices/ControlCenter.app/Contents/MacOS/ControlCenter"))
+        #expect(!ProcessGuard.canStop(pid: other, path: "/usr/libexec/syspolicyd"))
+        #expect(!ProcessGuard.canStop(pid: 1, path: "/usr/local/bin/node"))
+        #expect(!ProcessGuard.canStop(pid: other, path: "/Applications/泊位.app/Contents/MacOS/MacBJ"))
+        let marvisPython = "/Users/mac/Library/Application Support/com.tencent.mac.marvis/components/MarvisAgent/Versions/1.0.0.10406/runtime/python311/bin/python3.11"
+        #expect(!ProcessGuard.isSystemLocation(marvisPython))
+        #expect(ProcessGuard.canStop(resolvedPath: nil))
+        #expect(ProcessGuard.canStop(resolvedPath: marvisPython))
+        #expect(ProcessGuard.canStop(pid: other, path: marvisPython, command: "python3.11"))
+        #expect(ProcessGuard.absoluteExecutable(in: marvisPython) == marvisPython)
+        #expect(ProcessGuard.absoluteExecutable(in: "python3.11") == nil)
     }
 }

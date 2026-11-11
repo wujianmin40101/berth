@@ -25,7 +25,7 @@ struct HostsTool: View {
                     Spacer()
                 }
                 if !message.isEmpty {
-                    Text(message).font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(message).font(.system(size: 12)).textSecondaryStyle()
                 }
                 WorkspacePanel {
                     VStack(alignment: .leading, spacing: 8) {
@@ -33,7 +33,7 @@ struct HostsTool: View {
                             .font(.system(size: 13, weight: .semibold))
                         Text(L("方案只存在这台电脑上，内容是你自己保存的。"))
                             .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
+                            .textSecondaryStyle()
                         ToolTextField(title: L("方案名称"), text: $profileName)
                         Button(L("保存当前内容为方案")) { saveProfile() }
                             .buttonStyle(FieldMenuStyle())
@@ -105,7 +105,7 @@ struct SecretsTool: View {
                     }
                 }
                 if !message.isEmpty {
-                    Text(message).font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(message).font(.system(size: 12)).textSecondaryStyle()
                 }
                 ForEach(names, id: \.self) { item in
                     HStack {
@@ -113,7 +113,7 @@ struct SecretsTool: View {
                             .font(.system(size: 13, weight: .semibold, design: .monospaced))
                         Text(revealed == item ? (SecretStore.value(named: item) ?? "—") : "••••••")
                             .font(.system(size: 12, design: .monospaced))
-                            .foregroundStyle(.secondary)
+                            .textSecondaryStyle()
                             .lineLimit(1)
                         Spacer()
                         Button(revealed == item ? L("隐藏") : L("显示")) {
@@ -213,7 +213,7 @@ struct GitTool: View {
                     }
                 }
                 if !message.isEmpty {
-                    Text(message).font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(message).font(.system(size: 12)).textSecondaryStyle()
                 }
             }
         }
@@ -285,7 +285,7 @@ struct ProxyTool: View {
                     }
                 }
                 if !message.isEmpty {
-                    Text(message).font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(message).font(.system(size: 12)).textSecondaryStyle()
                 }
             }
         }
@@ -322,13 +322,13 @@ struct SnippetsTool: View {
                     }
                 }
                 if !message.isEmpty {
-                    Text(message).font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(message).font(.system(size: 12)).textSecondaryStyle()
                 }
                 ForEach(model.snippets) { snippet in
                     WorkspacePanel {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(snippet.title)
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 13, weight: .semibold))
                             Text(snippet.command)
                                 .font(.system(size: 12, design: .monospaced))
                                 .textSelection(.enabled)
@@ -389,7 +389,7 @@ struct UtilitiesTool: View {
                     .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
                 actionRow
                 if !message.isEmpty {
-                    Text(message).font(.system(size: 12)).foregroundStyle(.secondary)
+                    Text(message).font(.system(size: 12)).textSecondaryStyle()
                 }
                 if !output.isEmpty {
                     Text(output)

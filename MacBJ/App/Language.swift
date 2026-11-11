@@ -71,6 +71,7 @@ nonisolated enum AppLanguage {
     }
 }
 
+@MainActor
 @Observable
 final class LanguageStore {
     static let shared = LanguageStore()
