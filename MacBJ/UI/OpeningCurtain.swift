@@ -190,10 +190,11 @@ struct OpeningCurtain: View {
 
 /// 开场时任何普通按键都跳过。命令键留给系统快捷键。
 /// 监听回调不捕获界面，只发通知，避免在按键回调里拆掉监听。
-final class OpeningKeyMonitor: @unchecked Sendable {
+nonisolated final class OpeningKeyMonitor: @unchecked Sendable {
     static let skipNote = Notification.Name("berth.opening.skip")
     private let lock = NSLock()
-    private var token: Any?
+    /// 系统返回的监听凭证不是 Sendable。deinit 不在主隔离上，只能碰这份手动同步的存储。
+    nonisolated(unsafe) private var token: Any?
 
     func start() {
         stop()
