@@ -116,14 +116,14 @@ struct ImageToolTests {
         ).get()
         #expect(stitched.written.count == 1)
         #expect(stitched.written[0].pathExtension == "png")
-        #expect(try #require(pixelSize(stitched.written[0])) == (16, 8))
+        #expect(pixelSize(stitched.written[0]) == Optional((16, 8)))
         #expect(try Data(contentsOf: first) == before[0])
         #expect(try Data(contentsOf: second) == before[1])
 
         let down = try ImageWorkbench.perform(
             ImageJob(sources: [first, second], mode: .stitch, axis: .vertical)
         ).get()
-        #expect(try #require(pixelSize(down.written[0])) == (8, 16))
+        #expect(pixelSize(down.written[0]) == Optional((8, 16)))
         #expect(try Data(contentsOf: first) == before[0])
         #expect(try Data(contentsOf: second) == before[1])
     }
