@@ -425,9 +425,12 @@ struct ImageTool: View {
 
     private func fileURL(from provider: NSItemProvider) async -> URL? {
         if provider.canLoadObject(ofClass: URL.self) {
-            if let url = try? await provider.loadObject(ofClass: URL.self) as? URL {
-                return url
+            let loaded: URL? = await withCheckedContinuation { continuation in
+                _ = provider.loadObject(ofClass: URL.self) { object, _ in
+                    continuation.resume(returning: object)
+                }
             }
+            if let loaded { return loaded }
         }
         let identifier = UTType.fileURL.identifier
         return await withCheckedContinuation { continuation in
