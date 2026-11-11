@@ -84,22 +84,72 @@ struct ImageToolTests {
         #expect(planned.lastPathComponent == "photo-compressed-2.png")
         #expect(planned.standardizedFileURL.path != photo.standardizedFileURL.path)
 
-        let saved = try ImageWorkbench.perform(
-            ImageJob(sources: [photo], mode: .compress, quality: ImageJob.mediumQuality, save: .saveAs)
-        ).get()
-        #expect(saved.written.count == 1)
-        #expect(saved.written[0].standardizedFileURL.path != photo.standardizedFileURL.path)
         #expect(try Data(contentsOf: photo) == original)
         #expect(try Data(contentsOf: occupied) == Data("keep".utf8))
-        #expect(try fileNames(in: directory).contains("photo-compressed-2.png"))
-        #expect(pixelSize(saved.written[0]) != nil)
-        #expect(try fileNames(in: directory).allSatisfy { !$0.hasPrefix(".berth") })
 
         let gif = directory.appendingPathComponent("note.gif")
         try Data("gif".utf8).write(to: gif)
         let names = try fileNames(in: directory)
         #expect(ImageWorkbench.perform(ImageJob(sources: [gif], mode: .compress)) == .failure(.unsupported("note.gif")))
         #expect(try fileNames(in: directory) == names)
+    }
+
+    @Test("compress writes a file only when it is smaller")
+    func compressWritesAFileOnlyWhenItIsSmaller() throws {
+        #expect(!ImageWorkbench.isSmaller(encodedBytes: 20, than: 20))
+        #expect(!ImageWorkbench.isSmaller(encodedBytes: 21, than: 20))
+        #expect(ImageWorkbench.isSmaller(encodedBytes: 19, than: 20))
+
+        let directory = try makeDirectory()
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let image = try #require(patternedImage(size: 64))
+        let large = try #require(ImageWorkbench.encode(image, as: .jpeg, quality: 1))
+        let small = try #require(ImageWorkbench.encode(image, as: .jpeg, quality: 0.1))
+        #expect(small.count < large.count)
+
+        let roomy = directory.appendingPathComponent("roomy.jpg")
+        let tight = directory.appendingPathComponent("tight.jpg")
+        try large.write(to: roomy)
+        try small.write(to: tight)
+
+        let shrunk = try ImageWorkbench.perform(
+            ImageJob(sources: [roomy], mode: .compress, quality: 0.1, save: .saveAs)
+        ).get()
+        #expect(shrunk.written.count == 1)
+        #expect(shrunk.written[0].pathExtension == "jpg")
+        #expect(shrunk.written[0].standardizedFileURL.path != roomy.standardizedFileURL.path)
+        let saved = try Data(contentsOf: shrunk.written[0])
+        #expect(saved.count < large.count)
+        #expect(try Data(contentsOf: roomy) == large)
+        #expect(pixelSize(shrunk.written[0]) != nil)
+
+        let grown = ImageWorkbench.compressedByteCount(at: tight, quality: 1)
+        #expect(try #require(grown) >= small.count)
+        #expect(ImageWorkbench.perform(
+            ImageJob(sources: [tight], mode: .compress, quality: 1, save: .saveAs)
+        ) == .failure(.notSmaller))
+        #expect(try Data(contentsOf: tight) == small)
+        #expect(ImageWorkbench.perform(
+            ImageJob(sources: [tight], mode: .compress, quality: 1, save: .overwrite)
+        ) == .failure(.notSmaller))
+        #expect(try Data(contentsOf: tight) == small)
+
+        let roomyPreview = try #require(ImageWorkbench.compressedByteCount(at: roomy, quality: 0.1))
+        #expect(roomyPreview < large.count)
+        let tightPreview = try #require(ImageWorkbench.compressedByteCount(at: tight, quality: 0.1))
+        let mixed = try ImageWorkbench.perform(
+            ImageJob(sources: [roomy, tight], mode: .compress, quality: 0.1, save: .saveAs)
+        ).get()
+        #expect(try Data(contentsOf: roomy) == large)
+        #expect(try Data(contentsOf: tight) == small)
+        if tightPreview < small.count {
+            #expect(mixed.written.count == 2)
+            #expect(mixed.skippedNotSmaller == 0)
+        } else {
+            #expect(mixed.skippedNotSmaller == 1)
+            #expect(mixed.written.count == 1)
+            #expect(mixed.written[0].lastPathComponent.contains("roomy"))
+        }
     }
 
     @Test("stitch writes one new image and leaves the originals")
@@ -164,6 +214,31 @@ private func makeDirectory() throws -> URL {
         .appendingPathComponent("berth-images-\(UUID().uuidString)", isDirectory: true)
     try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
     return directory
+}
+
+private func patternedImage(size: Int) -> CGImage? {
+    guard let context = CGContext(
+        data: nil,
+        width: size,
+        height: size,
+        bitsPerComponent: 8,
+        bytesPerRow: 0,
+        space: CGColorSpaceCreateDeviceRGB(),
+        bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    ) else { return nil }
+    for y in 0..<size {
+        for x in 0..<size {
+            let n = (x * 17 + y * 31) % 256
+            context.setFillColor(
+                red: CGFloat(n) / 255,
+                green: CGFloat((n * 3) % 256) / 255,
+                blue: CGFloat((n * 7) % 256) / 255,
+                alpha: 1
+            )
+            context.fill(CGRect(x: x, y: y, width: 1, height: 1))
+        }
+    }
+    return context.makeImage()
 }
 
 private func writeSquare(

@@ -113,6 +113,7 @@ nonisolated enum ImageRefusal: Error, Equatable, Sendable {
     case emptyWatermark
     case unreadable(String)
     case unwritable(String)
+    case notSmaller
 
     var text: String {
         switch self {
@@ -126,6 +127,8 @@ nonisolated enum ImageRefusal: Error, Equatable, Sendable {
             L("没有读到这张图片：%@", name)
         case .unwritable(let name):
             L("没有保存：%@", name)
+        case .notSmaller:
+            L("按当前质量压不小，没有写出更大的文件。")
         }
     }
 }
@@ -133,6 +136,7 @@ nonisolated enum ImageRefusal: Error, Equatable, Sendable {
 nonisolated struct ImageWrite: Equatable, Sendable {
     var sources: [URL]
     var written: [URL]
+    var skippedNotSmaller = 0
 }
 
 /// 工程默认隔离是 MainActor。压缩和缩略图在后台任务里跑，所以这个类型保持非隔离。
@@ -176,12 +180,36 @@ nonisolated enum ImageWorkbench {
         read(at: url, maxPixel: maxPixel)
     }
 
+    /// 压缩后的字节必须更少。一样大也不写。
+    static func isSmaller(encodedBytes: Int, than originalBytes: Int) -> Bool {
+        encodedBytes < originalBytes
+    }
+
+    static func byteCount(at url: URL) -> Int? {
+        let scoped = url.startAccessingSecurityScopedResource()
+        defer {
+            if scoped { url.stopAccessingSecurityScopedResource() }
+        }
+        return try? url.resourceValues(forKeys: [.fileSizeKey]).fileSize
+    }
+
+    /// 只在内存里重编码，用来预估压缩后的大小。不写文件。
+    static func compressedByteCount(at url: URL, quality: Double) -> Int? {
+        guard let kind = ImageFileKind.match(url: url),
+              let image = read(at: url, maxPixel: nil),
+              let data = encode(image, as: kind, quality: ImageJob.clampedQuality(quality)) else {
+            return nil
+        }
+        return data.count
+    }
+
     private static func each(
         _ job: ImageJob,
         progress: (@Sendable (Double) -> Void)?
     ) -> Result<ImageWrite, ImageRefusal> {
         var written: [URL] = []
         var reserved: Set<String> = []
+        var skippedNotSmaller = 0
         let total = Double(job.sources.count)
         for (index, source) in job.sources.enumerated() {
             progress?(Double(index) / total)
@@ -199,6 +227,15 @@ nonisolated enum ImageWorkbench {
             }
             guard let rendered, let data = encode(rendered, as: kind, quality: job.quality) else {
                 return .failure(.unwritable(source.lastPathComponent))
+            }
+            if job.mode == .compress {
+                guard let originalBytes = byteCount(at: source) else {
+                    return .failure(.unreadable(source.lastPathComponent))
+                }
+                if !isSmaller(encodedBytes: data.count, than: originalBytes) {
+                    skippedNotSmaller += 1
+                    continue
+                }
             }
             let destination: URL
             if job.save == .overwrite {
@@ -223,7 +260,10 @@ nonisolated enum ImageWorkbench {
             written.append(destination)
         }
         progress?(1)
-        return .success(ImageWrite(sources: job.sources, written: written))
+        if written.isEmpty, skippedNotSmaller > 0 {
+            return .failure(.notSmaller)
+        }
+        return .success(ImageWrite(sources: job.sources, written: written, skippedNotSmaller: skippedNotSmaller))
     }
 
     private static func stitch(

@@ -549,5 +549,9 @@ nonisolated enum EnglishCopy {
         "没有读到这张图片：%@": "This image could not be read: %@",
         "没有保存：%@": "This was not saved: %@",
         "跳过开场": "Skip the opening",
+        "按当前质量压不小，没有写出更大的文件。": "This quality does not make a smaller file, so a larger file was not written.",
+        "原图 %@": "Original %@",
+        "结果 %@": "Result %@",
+        "质量对 PNG 不起作用。": "Quality does not apply to PNG.",
     ]
 }
