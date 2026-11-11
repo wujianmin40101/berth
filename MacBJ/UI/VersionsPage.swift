@@ -123,7 +123,9 @@ struct VersionsPage: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             PageHeader(title: L("版本"), subtitle: L("为下一次构建选对运行时。"))
+                .openingBlock(0)
             RuntimeKindBar(model: model)
+                .openingBlock(1)
             catalogBody
                 .opacity(contentFading ? 0 : 1)
                 .animation(nil, value: visibleKind)
@@ -143,17 +145,21 @@ struct VersionsPage: View {
         VStack(alignment: .leading, spacing: 18) {
             if let failure = model.failures[kind] {
                 failureBanner(failure)
+                    .openingBlock(2)
             }
             if let notice = model.projectNotice {
                 Text(notice)
                     .font(.system(size: 12))
                     .textSecondaryStyle()
                     .fixedSize(horizontal: false, vertical: true)
+                    .openingBlock(2)
             }
             globalCard
+                .openingBlock(1)
             VStack(alignment: .leading, spacing: 8) {
                 catalogHeader
                 catalogTools
+                    .openingBlock(1)
                 GeometryReader { proxy in
                     VersionCatalogTable(
                         model: model,
@@ -167,6 +173,7 @@ struct VersionsPage: View {
                     .frame(width: proxy.size.width, height: proxy.size.height, alignment: .topLeading)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .openingBlock(1)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .layoutPriority(1)
@@ -315,9 +322,11 @@ struct VersionsPage: View {
         HStack(spacing: 8) {
             Text(L("版本目录"))
                 .font(.system(size: 16, weight: .semibold))
+                .openingBlock(1)
             Text(catalogCount)
                 .font(.system(size: 13))
                 .textSecondaryStyle()
+                .openingBlock(2)
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
