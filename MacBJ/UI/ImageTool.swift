@@ -44,6 +44,9 @@ struct ImageTool: View {
     @State private var working = false
     @State private var progress = 0.0
     @State private var message = ""
+    @State private var originalBytes: Int?
+    @State private var resultBytes: Int?
+    @State private var sizeToken = 0
 
     var body: some View {
         ScrollView {
@@ -62,6 +65,14 @@ struct ImageTool: View {
                 if !picks.isEmpty {
                     preview
                     parameters
+                }
+                if mode == .compress, let originalBytes, let resultBytes {
+                    HStack(spacing: 16) {
+                        Text(L("原图 %@", ByteText.string(UInt64(originalBytes))))
+                        Text(L("结果 %@", ByteText.string(UInt64(resultBytes))))
+                    }
+                    .font(.system(size: 13))
+                    .textSecondaryStyle()
                 }
                 if !note.isEmpty {
                     Text(note)
@@ -111,9 +122,23 @@ struct ImageTool: View {
         } message: {
             Text(L("原来的文件会被替换。取消则保持不动。"))
         }
-        .onChange(of: mode) { _, _ in message = "" }
+        .onChange(of: mode) { _, _ in
+            message = ""
+            refreshSizes()
+        }
         .onChange(of: watermark) { _, _ in message = "" }
-        .onChange(of: picks.count) { _, _ in message = "" }
+        .onChange(of: picks.count) { _, _ in
+            message = ""
+            refreshSizes()
+        }
+        .onChange(of: quality) { _, _ in
+            message = ""
+            refreshSizes()
+        }
+        .onChange(of: selected) { _, _ in
+            message = ""
+            refreshSizes()
+        }
     }
 
     private var canSave: Bool {
@@ -313,11 +338,22 @@ struct ImageTool: View {
                 .font(.system(size: 13, design: .monospaced))
                 .frame(width: 36, alignment: .trailing)
                 .accessibilityHidden(true)
+            if selectedKind == .png {
+                Text(L("质量对 PNG 不起作用。"))
+                    .font(.system(size: 13))
+                    .textSecondaryStyle()
+                    .lineLimit(1)
+            }
         }
         .frame(minHeight: 44)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(L("质量"))
+        .accessibilityLabel(selectedKind == .png ? L("质量") + L("质量对 PNG 不起作用。") : L("质量"))
         .accessibilityValue("\(Int((quality * 100).rounded()))")
+    }
+
+    private var selectedKind: ImageFileKind? {
+        guard let url = selectedPick?.url else { return nil }
+        return ImageFileKind.match(url: url)
     }
 
     private var overwriteToggle: some View {
@@ -398,13 +434,21 @@ struct ImageTool: View {
             progress = 1
             switch result {
             case .success(let write):
-                if job.save == .overwrite {
-                    message = L("已覆盖原来的图片。")
-                } else if write.written.count > 1 {
-                    message = L("已另存 %lld 张。", write.written.count)
-                } else {
-                    message = L("已保存在原图旁边。")
+                var lines: [String] = []
+                if write.skippedNotSmaller > 0 {
+                    lines.append(ImageRefusal.notSmaller.text)
                 }
+                if !write.written.isEmpty {
+                    if job.save == .overwrite {
+                        lines.append(L("已覆盖原来的图片。"))
+                    } else if write.written.count > 1 {
+                        lines.append(L("已另存 %lld 张。", write.written.count))
+                    } else {
+                        lines.append(L("已保存在原图旁边。"))
+                    }
+                }
+                message = lines.joined(separator: "\n")
+                refreshSizes()
             case .failure(let refusal):
                 message = refusal.text
             }
@@ -468,6 +512,28 @@ struct ImageTool: View {
                 guard let index = picks.firstIndex(where: { $0.id == id }) else { return }
                 picks[index].thumbnail = image
             }
+        }
+    }
+
+    private func refreshSizes() {
+        sizeToken += 1
+        let token = sizeToken
+        guard mode == .compress, let url = selectedPick?.url else {
+            originalBytes = nil
+            resultBytes = nil
+            return
+        }
+        let quality = quality
+        Task {
+            let measured = await Task.detached(priority: .utility) {
+                (
+                    ImageWorkbench.byteCount(at: url),
+                    ImageWorkbench.compressedByteCount(at: url, quality: quality)
+                )
+            }.value
+            guard token == sizeToken else { return }
+            originalBytes = measured.0
+            resultBytes = measured.1
         }
     }
 
