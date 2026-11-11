@@ -52,6 +52,7 @@ private struct OpeningBlockModifier: ViewModifier {
 }
 
 enum WindowCanvas {
+    @MainActor
     static var systemScheme: ColorScheme? {
         let name = NSApp.effectiveAppearance.bestMatch(from: [.darkAqua, .aqua])
         if name == .darkAqua { return .dark }
