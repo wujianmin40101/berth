@@ -5,7 +5,7 @@ import ImageIO
 import UniformTypeIdentifiers
 
 /// 图片只在本机读写。这里没有网络请求。
-enum ImageFileKind: String, CaseIterable, Sendable, Equatable {
+nonisolated enum ImageFileKind: String, CaseIterable, Sendable, Equatable {
     case jpeg
     case png
     case heic
@@ -57,7 +57,7 @@ enum ImageFileKind: String, CaseIterable, Sendable, Equatable {
     }
 }
 
-enum ImageToolMode: String, CaseIterable, Sendable, Equatable {
+nonisolated enum ImageToolMode: String, CaseIterable, Sendable, Equatable {
     case compress
     case convert
     case stitch
@@ -73,7 +73,7 @@ enum ImageToolMode: String, CaseIterable, Sendable, Equatable {
     }
 }
 
-enum ImageStitchAxis: String, CaseIterable, Sendable, Equatable {
+nonisolated enum ImageStitchAxis: String, CaseIterable, Sendable, Equatable {
     case horizontal
     case vertical
 
@@ -85,12 +85,12 @@ enum ImageStitchAxis: String, CaseIterable, Sendable, Equatable {
     }
 }
 
-enum ImageSaveMode: String, Sendable, Equatable {
+nonisolated enum ImageSaveMode: String, Sendable, Equatable {
     case saveAs
     case overwrite
 }
 
-struct ImageJob: Sendable, Equatable {
+nonisolated struct ImageJob: Sendable, Equatable {
     var sources: [URL]
     var mode: ImageToolMode
     var quality: Double = ImageJob.mediumQuality
@@ -107,7 +107,7 @@ struct ImageJob: Sendable, Equatable {
     }
 }
 
-enum ImageRefusal: Error, Equatable, Sendable {
+nonisolated enum ImageRefusal: Error, Equatable, Sendable {
     case unsupported(String)
     case stitchNeedsTwo
     case emptyWatermark
@@ -130,12 +130,13 @@ enum ImageRefusal: Error, Equatable, Sendable {
     }
 }
 
-struct ImageWrite: Equatable, Sendable {
+nonisolated struct ImageWrite: Equatable, Sendable {
     var sources: [URL]
     var written: [URL]
 }
 
-enum ImageWorkbench {
+/// 工程默认隔离是 MainActor。压缩和缩略图在后台任务里跑，所以这个类型保持非隔离。
+nonisolated enum ImageWorkbench {
     static func validate(_ job: ImageJob) -> ImageRefusal? {
         if job.sources.isEmpty { return nil }
         for url in job.sources {
