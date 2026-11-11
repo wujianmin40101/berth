@@ -120,6 +120,7 @@ struct ToolboxPage: View {
         case .proxy: FeatureHelp.proxy
         case .snippets: FeatureHelp.snippets
         case .utilities: FeatureHelp.utilities
+        case .images: FeatureHelp.images
         case .machine:
             [
                 L("本机把内存分布、卸载应用、清理缓存、启动磁盘和优化速度放在同一页。"),
@@ -155,6 +156,8 @@ struct ToolboxToolScreen: View {
                 SnippetsTool(model: model)
             case .utilities:
                 UtilitiesTool(model: model)
+            case .images:
+                ImageTool()
             case .machine:
                 MachineCareTool()
             }

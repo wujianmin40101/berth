@@ -215,6 +215,7 @@ struct WorkspaceRail: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var hoveredID: String?
     @State private var hintDismissed = false
+    @State private var rowFrames: [String: CGRect] = [:]
     @FocusState private var focusedID: String?
 
     private var labelProgress: CGFloat { RailMetrics.labelProgress(width) }
@@ -224,7 +225,7 @@ struct WorkspaceRail: View {
     private var hintExit: Animation { Motion.exit }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 0) {
             labeledRow(title: ProductName.title, prominent: true, hovered: hoveredID == "brand") {
                 Image("BrandMark")
                     .resizable()
@@ -241,19 +242,47 @@ struct WorkspaceRail: View {
             .accessibilityLabel(ProductName.title)
             .padding(.bottom, 10)
 
-            railButton(.versions)
-            railButton(.projects)
-            railButton(.toolbox)
             ScrollView {
                 VStack(alignment: .leading, spacing: 8) {
+                    railButton(.versions, showsHint: false, reportsFrame: true)
+                    railButton(.projects, showsHint: false, reportsFrame: true)
+                    railButton(.toolbox, showsHint: false, reportsFrame: true)
                     ForEach(tools) { plugin in
-                        toolButton(plugin)
+                        toolButton(plugin, showsHint: false, reportsFrame: true)
                     }
                 }
+                .padding(.top, 8)
             }
             .scrollIndicators(.hidden)
-            .scrollClipDisabled()
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(minHeight: 0, maxHeight: .infinity, alignment: .top)
+            .clipped()
+            .background {
+                GeometryReader { geo in
+                    Color.clear.preference(
+                        key: RailFrameKey.self,
+                        value: ["__scroll__": geo.frame(in: .named("rail"))]
+                    )
+                }
+            }
+            footer
+        }
+        .coordinateSpace(name: "rail")
+        .onPreferenceChange(RailFrameKey.self) { frames in
+            if rowFrames != frames { rowFrames = frames }
+        }
+        .overlay(alignment: .topLeading) { scrollingHints }
+        .padding(.vertical, 8)
+        .frame(width: width, alignment: .leading)
+        .frame(maxHeight: .infinity)
+        .onKeyPress(.escape) {
+            hintDismissed = true
+            return .handled
+        }
+    }
+
+    /// 主题和设置钉在底部。上面的导航不够高时在这一区内滚动，不盖住这两项。
+    private var footer: some View {
+        VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: labelProgress == 0 ? 0 : 8) {
                 ThemeSwitchButton(isDark: isDark, host: host, action: toggleTheme)
                 if labelProgress > 0 {
@@ -271,6 +300,7 @@ struct WorkspaceRail: View {
                 Spacer(minLength: 0)
             }
             .padding(.horizontal, RailMetrics.side)
+            .frame(minHeight: 44)
             .frame(width: width, alignment: .leading)
             .background { hoverPlate(hoveredID == "theme") }
             .contentShape(Rectangle())
@@ -280,32 +310,83 @@ struct WorkspaceRail: View {
             }
             railButton(.settings)
         }
-        .padding(.vertical, 8)
-        .frame(width: width, alignment: .leading)
-        .frame(maxHeight: .infinity)
-        .onKeyPress(.escape) {
-            hintDismissed = true
-            return .handled
+        .padding(.top, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(palette.canvas)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(palette.line)
+                .frame(height: 1)
+                .frame(maxWidth: .infinity)
         }
+        .zIndex(1)
     }
 
-    private func railButton(_ item: WorkspacePage) -> some View {
-        iconButton(title: item.title, icon: item.icon, selected: page == item) {
+    private func railButton(_ item: WorkspacePage, showsHint: Bool = true, reportsFrame: Bool = false) -> some View {
+        iconButton(
+            title: item.title,
+            icon: item.icon,
+            selected: page == item,
+            showsHint: showsHint,
+            reportsFrame: reportsFrame
+        ) {
             page = item
         }
     }
 
-    private func toolButton(_ plugin: ToolboxPlugin) -> some View {
+    private func toolButton(_ plugin: ToolboxPlugin, showsHint: Bool = true, reportsFrame: Bool = false) -> some View {
         let selected: Bool = {
             if case .tool(let current) = page { return current == plugin }
             return false
         }()
-        return iconButton(title: plugin.title, icon: plugin.icon, selected: selected) {
+        return iconButton(
+            title: plugin.title,
+            icon: plugin.icon,
+            selected: selected,
+            showsHint: showsHint,
+            reportsFrame: reportsFrame
+        ) {
             page = .tool(plugin)
         }
     }
 
-    private func iconButton(title: String, icon: String, selected: Bool, action: @escaping () -> Void) -> some View {
+    private var scrollingHintIDs: [String] {
+        [WorkspacePage.versions.title, WorkspacePage.projects.title, WorkspacePage.toolbox.title] + tools.map(\.title)
+    }
+
+    private func scrollingSymbol(_ title: String) -> String {
+        switch title {
+        case WorkspacePage.versions.title: WorkspacePage.versions.icon
+        case WorkspacePage.projects.title: WorkspacePage.projects.icon
+        case WorkspacePage.toolbox.title: WorkspacePage.toolbox.icon
+        default: tools.first { $0.title == title }?.icon ?? "circle"
+        }
+    }
+
+    private func scrollingRowVisible(_ title: String) -> Bool {
+        guard let row = rowFrames[title], let port = rowFrames["__scroll__"] else { return false }
+        return row.maxY > port.minY && row.minY < port.maxY
+    }
+
+    private var scrollingHints: some View {
+        ForEach(scrollingHintIDs, id: \.self) { title in
+            if hintVisible(title), scrollingRowVisible(title), let frame = rowFrames[title] {
+                railHint(id: title, title: title, symbol: scrollingSymbol(title))
+                    .frame(width: width, height: frame.height, alignment: .leading)
+                    .offset(y: frame.minY)
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+
+    private func iconButton(
+        title: String,
+        icon: String,
+        selected: Bool,
+        showsHint: Bool = true,
+        reportsFrame: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
             labeledRow(title: title, selected: selected, hovered: hoveredID == title) {
                 Image(systemName: icon)
@@ -326,8 +407,20 @@ struct WorkspaceRail: View {
             hintDismissed = true
             return .handled
         }
+        .background {
+            if reportsFrame {
+                GeometryReader { geo in
+                    Color.clear.preference(
+                        key: RailFrameKey.self,
+                        value: [title: geo.frame(in: .named("rail"))]
+                    )
+                }
+            }
+        }
         .overlay(alignment: .leading) {
-            railHint(id: title, title: title, symbol: icon)
+            if showsHint {
+                railHint(id: title, title: title, symbol: icon)
+            }
         }
         .accessibilityLabel(title)
     }
@@ -396,6 +489,14 @@ struct WorkspaceRail: View {
             .padding(.horizontal, 8)
             .opacity(visible ? 1 : 0)
             .animation(reduceMotion ? nil : Motion.color, value: visible)
+    }
+}
+
+private nonisolated struct RailFrameKey: PreferenceKey {
+    nonisolated(unsafe) static var defaultValue: [String: CGRect] = [:]
+
+    static func reduce(value: inout [String: CGRect], nextValue: () -> [String: CGRect]) {
+        value.merge(nextValue(), uniquingKeysWith: { _, new in new })
     }
 }
 
