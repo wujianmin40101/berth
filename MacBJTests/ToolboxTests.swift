@@ -120,6 +120,7 @@ struct ToolboxTests {
         let fresh = ToolboxSettings.enabledPlugins()
         #expect(fresh == [.ports, .processes, .services])
         #expect(!fresh.contains(.machine))
+        #expect(!fresh.contains(.images))
 
         defaults.set(["ports", "machine"], forKey: enabledKey)
         #expect(ToolboxSettings.enabledPlugins().contains(.machine))

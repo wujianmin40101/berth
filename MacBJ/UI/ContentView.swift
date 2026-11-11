@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -9,6 +10,16 @@ struct ContentView: View {
     @State private var navForward = true
     @State private var theme: ColorScheme? = AppearanceStore.saved
     @State private var themeHost = ThemeHost()
+    @State private var showOpening = !OpeningStore.hasPlayed
+    @State private var openingReveal = OpeningStore.hasPlayed
+        ? OpeningRevealState.rest
+        : OpeningRevealState(shownThrough: -1, animate: true)
+    @State private var openingSealed = !OpeningStore.hasPlayed
+    @State private var logoOpacity = 0.0
+    @State private var door: CGFloat = 0
+    @State private var openingStarted = false
+    @State private var openingToken = 0
+    @State private var keyMonitor = OpeningKeyMonitor()
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -17,13 +28,14 @@ struct ContentView: View {
     }
 
     var body: some View {
-        let resolved = theme ?? colorScheme
-        let palette = WorkspacePalette(scheme: resolved)
+        let canvasScheme = theme ?? WindowCanvas.systemScheme ?? colorScheme
+        let palette = WorkspacePalette(scheme: canvasScheme)
+        let curtainOn = showOpening && !reduceMotion
         HStack(spacing: 0) {
             WorkspaceRailColumn(
                 page: Binding(get: { page }, set: { show($0) }),
                 tools: ToolboxPlugin.allCases.filter { toolbox.enabledPlugins.contains($0) },
-                isDark: resolved == .dark,
+                isDark: canvasScheme == .dark,
                 host: themeHost,
                 toggleTheme: toggleTheme
             )
@@ -38,13 +50,26 @@ struct ContentView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(palette.canvas)
+        .background { WindowCanvasInstaller(scheme: canvasScheme) }
         .environment(\.palette, palette)
+        .environment(\.openingReveal, reduceMotion ? .rest : openingReveal)
         .environment(\.locale, LanguageStore.shared.locale)
         .preferredColorScheme(theme)
+        .overlay {
+            if curtainOn {
+                OpeningCurtain(
+                    door: door,
+                    logoOpacity: logoOpacity,
+                    sealed: openingSealed,
+                    onSkip: skipOpening
+                )
+                .environment(\.palette, palette)
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .navigation) {
                 WorkspaceBreadcrumb(page: page, palette: palette)
-                    .environment(\.colorScheme, resolved)
+                    .environment(\.colorScheme, canvasScheme)
             }
         }
         .frame(minWidth: 960, minHeight: 640)
@@ -57,6 +82,14 @@ struct ContentView: View {
             guard model.loadsOnAppear else { return }
             model.refreshAll()
         }
+        .onAppear { startOpeningIfNeeded() }
+        .onChange(of: reduceMotion) { _, reduced in
+            if reduced, showOpening { skipOpening() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: OpeningKeyMonitor.skipNote)) { _ in
+            if showOpening { skipOpening() }
+        }
+        .onDisappear { keyMonitor.stop() }
         .onChange(of: toolbox.enabledPlugins) { _, plugins in
             guard case .tool(let plugin) = page, !plugins.contains(plugin) else { return }
             show(.toolbox)
@@ -127,6 +160,72 @@ struct ContentView: View {
         .sheet(isPresented: $model.showHook) {
             HookConfirmView(status: model.hookStatus, onInstall: model.installHook)
         }
+    }
+
+    private func startOpeningIfNeeded() {
+        if reduceMotion || OpeningStore.hasPlayed {
+            settleOpening()
+            return
+        }
+        guard !openingStarted else { return }
+        openingStarted = true
+        let token = openingToken
+        keyMonitor.start()
+        withAnimation(Motion.enter) { logoOpacity = 1 }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(240))
+            guard token == openingToken, showOpening else { return }
+            var instant = Transaction()
+            instant.disablesAnimations = true
+            withTransaction(instant) { openingSealed = false }
+            revealBlocks(token: token)
+            withAnimation(.timingCurve(0.16, 1, 0.3, 1, duration: Motion.theme)) {
+                door = 1
+            }
+            try? await Task.sleep(for: .seconds(Motion.theme))
+            guard token == openingToken, showOpening else { return }
+            finishOpening()
+        }
+    }
+
+    /// 页头、主面板、说明错开 80ms。减弱动态效果不会走到这里。
+    private func revealBlocks(token: Int) {
+        withAnimation(Motion.enter) { openingReveal.shownThrough = 0 }
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(80))
+            guard token == openingToken else { return }
+            withAnimation(Motion.enter) { openingReveal.shownThrough = 1 }
+            try? await Task.sleep(for: .milliseconds(80))
+            guard token == openingToken else { return }
+            withAnimation(Motion.enter) { openingReveal.shownThrough = 2 }
+        }
+    }
+
+    private func finishOpening() {
+        showOpening = false
+        openingReveal = .rest
+        OpeningStore.markPlayed()
+        keyMonitor.stop()
+    }
+
+    private func skipOpening() {
+        openingToken += 1
+        openingStarted = true
+        settleOpening()
+    }
+
+    private func settleOpening() {
+        keyMonitor.stop()
+        var instant = Transaction()
+        instant.disablesAnimations = true
+        withTransaction(instant) {
+            showOpening = false
+            openingSealed = false
+            door = 1
+            logoOpacity = 1
+            openingReveal = .rest
+        }
+        OpeningStore.markPlayed()
     }
 
     private func toggleTheme() {
