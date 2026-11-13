@@ -102,7 +102,7 @@ private enum PhoneTabMotion {
 }
 
 private struct PhoneTabFrameKey: PreferenceKey {
-    static var defaultValue: [PhonePage: CGRect] = [:]
+    static let defaultValue: [PhonePage: CGRect] = [:]
     static func reduce(value: inout [PhonePage: CGRect], nextValue: () -> [PhonePage: CGRect]) {
         value.merge(nextValue(), uniquingKeysWith: { $1 })
     }
