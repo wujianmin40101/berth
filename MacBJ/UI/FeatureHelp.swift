@@ -61,6 +61,16 @@ enum FeatureHelp {
         ].joined(separator: "\n")
     }
 
+    static var phone: String {
+        [
+            L("手机任务读取你设置的 iPhone Use 目录里的打卡脚本，以及 ~/.local/share/iphone-use/logs/punch.log。上班和下班两条定时来自已经写好的 launchd，这里展示说明、时间和执行结果，不改它们的钟点。"),
+            L("新增的定时写在泊位自己的清单里，并挂成单独的 LaunchAgents。打卡类任务到了所选分钟会立刻执行。自定义命令在 iPhone Use 目录里用 zsh 执行。停用和删除只处理这里新增的任务。立刻执行会先确认。"),
+            L("自定义定时把提示词交给 AI。对方把任务写进 scripts/tasks 的 .task.json 后，刷新会按文件挂上定时。"),
+            L("顶部的分页可以在定时和各项手机能力之间切换。左右方向键也能换页。"),
+            L("画面页打开时走 USB 预览，离开这一页就停止采集。恢复、手势和截图仍读取本机状态。这里不向手机发送点击。"),
+        ].joined(separator: "\n")
+    }
+
     static var images: String {
         [
             L("把图片拖进来，或一次选多张。可以压缩、转换成 JPEG、PNG 或 WebP，横着或竖着拼接，或加上文字水印。都在这台 Mac 上完成，不会上传。"),

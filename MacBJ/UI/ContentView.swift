@@ -284,8 +284,9 @@ struct ContentView: View {
         case .versions: 0
         case .projects: 1
         case .toolbox: 2
+        case .phone: 3
         case .tool(let plugin):
-            3 + (ToolboxPlugin.allCases.firstIndex(of: plugin) ?? 0)
+            4 + (ToolboxPlugin.allCases.firstIndex(of: plugin) ?? 0)
         case .settings: 80
         }
     }
@@ -334,6 +335,14 @@ private struct WorkspaceStage: View {
             ProjectsPage(model: model, chooseProject: $chooseProject)
         case .toolbox:
             ToolboxPage(model: toolbox, projectDirectory: model.projectDirectory)
+        case .phone:
+            if toolbox.enabledPlugins.contains(.phone) {
+                PhoneTasksTool()
+                    .padding(.horizontal, 28)
+                    .padding(.top, 8)
+                    .padding(.bottom, 28)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
         case .tool(let plugin):
             ToolboxToolScreen(plugin: plugin, model: toolbox, projectDirectory: model.projectDirectory)
                 .padding(.horizontal, 28)

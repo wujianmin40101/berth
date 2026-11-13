@@ -16,6 +16,7 @@ enum ToolboxPlugin: String, CaseIterable, Identifiable {
     case snippets
     case utilities
     case images
+    case phone
     case machine
 
     var id: String { rawValue }
@@ -32,6 +33,7 @@ enum ToolboxPlugin: String, CaseIterable, Identifiable {
         case .snippets: L("命令收藏")
         case .utilities: L("格式工具")
         case .images: L("图片处理")
+        case .phone: L("手机任务")
         case .machine: L("本机")
         }
     }
@@ -48,6 +50,7 @@ enum ToolboxPlugin: String, CaseIterable, Identifiable {
         case .snippets: L("把常用命令留在这里，需要时复制或运行。")
         case .utilities: L("格式化 JSON、转换时间戳，以及 Base64 和 URL 编解码。")
         case .images: L("压缩、转格式、拼接和加水印都在本机完成，不会上传。")
+        case .phone: L("查看 iPhone Use 里的打卡任务、执行结果，并增加定时。")
         case .machine: L("内存分布、卸载应用、清理缓存和优化速度放在一起。")
         }
     }
@@ -64,6 +67,7 @@ enum ToolboxPlugin: String, CaseIterable, Identifiable {
         case .snippets: "terminal"
         case .utilities: "wrench.adjustable"
         case .images: "photo"
+        case .phone: "iphone"
         case .machine: "desktopcomputer"
         }
     }

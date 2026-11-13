@@ -5,6 +5,7 @@ enum WorkspacePage: Hashable, Identifiable {
     case versions
     case projects
     case toolbox
+    case phone
     case settings
     case tool(ToolboxPlugin)
 
@@ -13,6 +14,7 @@ enum WorkspacePage: Hashable, Identifiable {
         case .versions: "versions"
         case .projects: "projects"
         case .toolbox: "toolbox"
+        case .phone: "phone"
         case .settings: "settings"
         case .tool(let plugin): "tool-\(plugin.rawValue)"
         }
@@ -23,6 +25,7 @@ enum WorkspacePage: Hashable, Identifiable {
         case .versions: L("版本")
         case .projects: L("项目")
         case .toolbox: L("工具")
+        case .phone: L("手机任务")
         case .settings: L("设置")
         case .tool(let plugin): plugin.title
         }
@@ -33,6 +36,7 @@ enum WorkspacePage: Hashable, Identifiable {
         case .versions: "square.stack.3d.up"
         case .projects: "folder"
         case .toolbox: "wrench.and.screwdriver"
+        case .phone: "iphone"
         case .settings: "gearshape"
         case .tool(let plugin): plugin.icon
         }

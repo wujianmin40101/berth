@@ -6,15 +6,26 @@ struct ToolboxPage: View {
     var projectDirectory: URL?
     @Environment(\.palette) private var palette
     @State private var selection: ToolboxPlugin = .ports
+    @State private var confirmPhone = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: 0) {
-            pluginList
-            Rectangle()
-                .fill(palette.line)
-                .frame(width: 1)
-            detail
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        ZStack {
+            HStack(alignment: .top, spacing: 0) {
+                pluginList
+                Rectangle()
+                    .fill(palette.line)
+                    .frame(width: 1)
+                detail
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            }
+            if confirmPhone {
+                PhoneEnableDialog(offersEnable: true) {
+                    PhoneUseLocation.introSeen = true
+                    model.setPlugin(.phone, enabled: true)
+                } onClose: {
+                    confirmPhone = false
+                }
+            }
         }
     }
 
@@ -30,6 +41,11 @@ struct ToolboxPage: View {
             .padding(16)
         }
         .frame(width: 248)
+        .onChange(of: selection) { _, plugin in
+            if plugin == .phone, !model.enabledPlugins.contains(.phone) {
+                confirmPhone = true
+            }
+        }
     }
 
     private func pluginSection(_ title: String, _ plugins: [ToolboxPlugin]) -> some View {
@@ -106,6 +122,10 @@ struct ToolboxPage: View {
     }
 
     private func update(_ plugin: ToolboxPlugin, enabled isOn: Bool) {
+        if plugin == .phone, isOn, !model.enabledPlugins.contains(.phone) {
+            confirmPhone = true
+            return
+        }
         model.setPlugin(plugin, enabled: isOn)
     }
 
@@ -121,6 +141,7 @@ struct ToolboxPage: View {
         case .snippets: FeatureHelp.snippets
         case .utilities: FeatureHelp.utilities
         case .images: FeatureHelp.images
+        case .phone: FeatureHelp.phone
         case .machine:
             [
                 L("本机把内存分布、卸载应用、清理缓存、启动磁盘和优化速度放在同一页。"),
@@ -158,6 +179,8 @@ struct ToolboxToolScreen: View {
                 UtilitiesTool(model: model)
             case .images:
                 ImageTool()
+            case .phone:
+                PhoneTasksTool()
             case .machine:
                 MachineCareTool()
             }
