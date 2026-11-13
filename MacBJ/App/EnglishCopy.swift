@@ -1,7 +1,18 @@
 import Foundation
 
 nonisolated enum EnglishCopy {
-    static let table: [String: String] = [
+    /// 调试构建里一次写下整张表会在启动时撑满栈。原先的条目和手机任务的条目分开构造，后写的覆盖同名键。
+    static let table: [String: String] = {
+        var copy = core()
+        for (key, value) in phone() {
+            copy[key] = value
+        }
+        return copy
+    }()
+
+    @inline(never)
+    private static func core() -> [String: String] {
+        [
         "拒绝写入意外路径。": "Refused to write an unexpected path.",
         "没有这个命令: %@": "Unknown command: %@",
         "list 不接受参数。": "list does not take arguments.",
@@ -553,6 +564,12 @@ nonisolated enum EnglishCopy {
         "原图 %@": "Original %@",
         "结果 %@": "Result %@",
         "质量对 PNG 不起作用。": "Quality does not apply to PNG.",
+        ]
+    }
+
+    @inline(never)
+    private static func phone() -> [String: String] {
+        [
         "手机任务": "Phone Tasks",
         "查看 iPhone Use 里的打卡任务、执行结果，并增加定时。": "See iPhone Use punch tasks, their results, and add schedules.",
         "手机任务读取你设置的 iPhone Use 目录里的打卡脚本，以及 ~/.local/share/iphone-use/logs/punch.log。上班和下班两条定时来自已经写好的 launchd，这里展示说明、时间和执行结果，不改它们的钟点。": "Phone tasks read the punch script in the iPhone Use directory you set, and ~/.local/share/iphone-use/logs/punch.log. The clock-in and clock-out schedules come from launchd that is already installed. This page shows the description, time, and result, and does not change those times.",
@@ -806,5 +823,6 @@ nonisolated enum EnglishCopy {
         "只会卸下这里新增的定时，不会改 iPhone Use 原来的上班和下班。": "This removes only a schedule added here. It does not change iPhone Use's clock-in or clock-out.",
         "执行": "Run",
         "记录": "Note",
-    ]
+        ]
+    }
 }
